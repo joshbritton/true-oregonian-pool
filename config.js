@@ -10,8 +10,8 @@ const CONFIG = {
 
   // ── Supabase ─────────────────────────────────────────────
   // Get these from supabase.com → your project → Settings → API
-  supabaseUrl:  "https://YOUR_PROJECT_ID.supabase.co",
-  supabaseKey:  "YOUR_ANON_PUBLIC_KEY",
+  supabaseUrl:  "https://sb_publishable_Rf4eCOElfrD3ujjM6s-_1Q_f3pL-RRW.supabase.co",
+  supabaseKey:  "sb_secret_JYc8xXq6-XvB2Ufo2jo9rg_AabRNfrh",
 
   // ── Draft settings ────────────────────────────────────────
   picksPerPlayer: 4,
