@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Setup — True Oregonian Majors Pool</title>
+<link rel="stylesheet" href="shared.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="db.js"></script>
+<style>
+.setup-page { max-width: 680px; margin: 0 auto; padding: 32px 24px; }
+.page-title { font-family: 'Cormorant Garamond', serif; font-size: 1.9rem; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+[data-theme="dark"] .page-title { color: var(--gold); }
+.page-sub { color: var(--muted); margin-bottom: 28px; font-size: .88rem; line-height: 1.5; }
+
+.setup-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 18px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+.setup-section-header { background: var(--navy); padding: 11px 20px; display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid rgba(197,165,97,.15); }
+.step-num { font-family: 'DM Mono', monospace; font-size: .65rem; color: var(--gold); letter-spacing: .06em; }
+.step-title { font-family: 'Cormorant Garamond', serif; font-size: .95rem; font-weight: 600; color: white; letter-spacing: .04em; }
+.section-body { padding: 20px; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 500px) { .form-row { grid-template-columns: 1fr; } }
+
+.form-group { margin-bottom: 14px; }
+.form-group:last-child { margin-bottom: 0; }
+.form-group label { display: block; font-size: .62rem; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: var(--navy); margin-bottom: 6px; }
+[data-theme="dark"] .form-group label { color: rgba(255,255,255,.55); }
+.hint { font-size: .7rem; color: var(--muted); margin-bottom: 6px; font-weight: 400; text-transform: none; letter-spacing: 0; line-height: 1.4; }
+.form-group input {
+  width: 100%; padding: 10px 12px;
+  border: 1px solid var(--border); border-radius: var(--radius);
+  font-family: 'DM Sans', sans-serif; font-size: .9rem;
+  background: var(--bg); color: var(--text); transition: border-color .15s;
+}
+.form-group input:focus { outline: none; border-color: var(--navy); }
+[data-theme="dark"] .form-group input:focus { border-color: var(--gold); }
+
+.participants-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+@media (max-width: 500px) { .participants-grid { grid-template-columns: 1fr 1fr; } }
+.p-input-row { display: flex; align-items: center; gap: 7px; }
+.p-num { font-family: 'DM Mono', monospace; width: 20px; text-align: center; font-weight: 500; color: var(--gold); font-size: .72rem; flex-shrink: 0; }
+.p-input-row input { flex: 1; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: .84rem; background: var(--bg); color: var(--text); }
+
+/* Current tournament banner */
+.current-banner {
+  background: var(--under-bg);
+  border: 1px solid rgba(10,92,42,.15);
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+}
+[data-theme="dark"] .current-banner { background: rgba(74,186,118,.08); border-color: rgba(74,186,118,.15); }
+.current-banner strong { font-family: 'Cormorant Garamond', serif; font-size: 1.05rem; color: var(--navy); }
+[data-theme="dark"] .current-banner strong { color: var(--gold); }
+.current-banner .meta { font-size: .75rem; color: var(--muted); margin-top: 3px; }
+.status-pill { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.status-setup    { background: #fef3c7; color: #92400e; }
+.status-draft    { background: #dbeafe; color: #1e40af; }
+.status-active   { background: #d1fae5; color: #065f46; }
+.status-complete { background: #f3f4f6; color: #374151; }
+
+.btn-danger { background: none; border: 1px solid #e53935; color: #e53935; border-radius: var(--radius); padding: 8px 16px; font-family: 'DM Sans', sans-serif; font-size: .78rem; cursor: pointer; transition: all .15s; }
+.btn-danger:hover { background: #e53935; color: white; }
+
+.alert { padding: 12px 16px; border-radius: var(--radius); font-size: .88rem; margin-bottom: 20px; display: none; }
+.alert-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+.alert-error   { background: #fde8e8; color: #c0392b; border: 1px solid #f5b7b7; }
+
+.actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
+
+@media (max-width: 640px) {
+  .setup-page { padding: 16px; }
+  .site-header { padding: 0 14px; }
+}
+</style>
+</head>
+<body>
+
+<div class="site-header">
+  <div class="header-brand">
+    <div class="pga-seal">
+      <span class="seal-pga">PGA</span>
+      <div class="seal-line"></div>
+      <span class="seal-year">2026</span>
+    </div>
+    <div class="brand-text">
+      <div class="pool-name">True Oregonian Majors Pool</div>
+      <div class="tournament-name">Setup</div>
+    </div>
+  </div>
+  <nav class="header-nav">
+    <a class="nav-link" href="index.html">⛳ <span class="nav-label">Leaderboard</span></a>
+    <a class="nav-link" href="draft.html">📋 <span class="nav-label">Draft</span></a>
+    <a class="nav-link active" href="setup.html">⚙️ <span class="nav-label">Setup</span></a>
+    <button class="dark-toggle" onclick="toggleDarkMode()" title="Toggle dark mode">🌙</button>
+  </nav>
+</div>
+
+<div class="setup-page">
+  <h1 class="page-title">Tournament Setup</h1>
+  <p class="page-sub">Create a tournament, add your participants in draft order, then head to the draft board. This only needs to be done once per major.</p>
+
+  <div id="alert" class="alert"></div>
+  <div id="current-banner" style="display:none" class="current-banner">
+    <div>
+      <strong id="cur-name">—</strong>
+      <span id="cur-status" class="status-pill" style="margin-left:8px">—</span>
+      <div class="meta" id="cur-meta">—</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <a href="draft.html" class="btn-primary" style="text-decoration:none;padding:8px 18px;font-size:.75rem">Draft Board →</a>
+      <button class="btn-danger" onclick="resetTournament()">Reset</button>
+    </div>
+  </div>
+
+  <!-- Tournament details -->
+  <div class="setup-section">
+    <div class="setup-section-header">
+      <span class="step-num">01</span>
+      <span class="step-title">Tournament Details</span>
+    </div>
+    <div class="section-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tournament Name</label>
+          <input type="text" id="t-name" placeholder="e.g. 2026 PGA Championship"/>
+        </div>
+        <div class="form-group">
+          <label>Total Purse ($)</label>
+          <input type="number" id="t-purse" placeholder="21000000" value="21000000"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>ESPN Event ID</label>
+        <div class="hint">From the ESPN scoreboard URL: espn.com/golf/leaderboard/_/id/<strong>401811941</strong> — paste just the number.</div>
+        <input type="text" id="t-espn" placeholder="e.g. 401811941" style="max-width:260px"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- Participants -->
+  <div class="setup-section">
+    <div class="setup-section-header">
+      <span class="step-num">02</span>
+      <span class="step-title">Participants — enter in draft order</span>
+    </div>
+    <div class="section-body">
+      <div class="participants-grid" id="participants-grid"></div>
+      <button class="btn-primary" onclick="addParticipantRow()" style="margin-top:14px;padding:8px 16px;font-size:.72rem">+ Add Player</button>
+    </div>
+  </div>
+
+  <!-- Save -->
+  <div class="actions">
+    <button class="btn-primary" onclick="saveTournament()" id="save-btn">
+      Save & Continue to Draft →
+    </button>
+    <div style="font-size:.75rem;color:var(--muted)"><?= CONFIG.picksPerPlayer ?> picks per player</div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  initDarkMode(); updateDarkBtn();
+  loadCurrent();
+  // Default 9 rows for TOMP
+  const defaultNames = ['Robb','Dominic','Tyler','Josh L','Taylor','Conor','Josh B','Sam','Aaron'];
+  defaultNames.forEach(n => addParticipantRow(n));
+});
+
+function addParticipantRow(value='') {
+  const grid = document.getElementById('participants-grid');
+  const idx = grid.children.length + 1;
+  const row = document.createElement('div');
+  row.className = 'p-input-row';
+  row.innerHTML = `<span class="p-num">${String(idx).padStart(2,'0')}</span>
+    <input type="text" placeholder="Name" value="${value}"/>`;
+  grid.appendChild(row);
+}
+
+async function loadCurrent() {
+  try {
+    const t = await getTournament();
+    if (!t) return;
+    document.getElementById('current-banner').style.display = 'flex';
+    document.getElementById('cur-name').textContent = t.name;
+    const badge = document.getElementById('cur-status');
+    badge.textContent = t.status; badge.className = `status-pill status-${t.status}`;
+    const purseStr = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(t.purse);
+    document.getElementById('cur-meta').textContent = `Purse: ${purseStr} · ESPN ID: ${t.espn_id||'not set'}`;
+    // pre-fill form
+    document.getElementById('t-name').value = t.name;
+    document.getElementById('t-purse').value = t.purse;
+    document.getElementById('t-espn').value = t.espn_id||'';
+    const parts = await getParticipants(t.id);
+    if (parts.length) {
+      document.getElementById('participants-grid').innerHTML = '';
+      parts.forEach(p => addParticipantRow(p.name));
+    }
+  } catch(e) { console.error(e); }
+}
+
+async function saveTournament() {
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    const name   = document.getElementById('t-name').value.trim();
+    const purse  = parseFloat(document.getElementById('t-purse').value)||21000000;
+    const espnId = document.getElementById('t-espn').value.trim();
+    const names  = [...document.querySelectorAll('#participants-grid input')]
+      .map(i => i.value.trim()).filter(Boolean);
+    if (!name) { showAlert('Please enter a tournament name.','error'); return; }
+    if (names.length < 2) { showAlert('Please add at least 2 participants.','error'); return; }
+    let t = await getTournament();
+    if (t) {
+      await db.from('tournaments').update({ name, purse, espn_id: espnId }).eq('id', t.id);
+      await deleteParticipants(t.id);
+      await createParticipants(t.id, names);
+    } else {
+      t = await createTournament({ name, espnId, purse });
+      await createParticipants(t.id, names);
+    }
+    showAlert(`✅ Saved! ${names.length} participants. Redirecting to draft board…`,'success');
+    setTimeout(() => window.location.href='draft.html', 1800);
+  } catch(e) {
+    showAlert('Error: '+e.message,'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save & Continue to Draft →';
+  }
+}
+
+async function resetTournament() {
+  if (!confirm('Delete this tournament and all picks? This cannot be undone.')) return;
+  try {
+    const t = await getTournament();
+    if (t) await db.from('tournaments').delete().eq('id', t.id);
+    document.getElementById('current-banner').style.display = 'none';
+    document.getElementById('t-name').value = '';
+    document.getElementById('t-espn').value = '';
+    document.getElementById('participants-grid').innerHTML = '';
+    const defaultNames = ['Robb','Dominic','Tyler','Josh L','Taylor','Conor','Josh B','Sam','Aaron'];
+    defaultNames.forEach(n => addParticipantRow(n));
+    showAlert('Tournament reset. Create a new one below.','success');
+  } catch(e) { showAlert('Error: '+e.message,'error'); }
+}
+
+function showAlert(msg, type) {
+  const el = document.getElementById('alert');
+  el.textContent = msg; el.className = `alert alert-${type}`;
+  el.style.display = 'block';
+  window.scrollTo({top:0,behavior:'smooth'});
+  if (type==='success') setTimeout(()=>{el.style.display='none'},4000);
+}
+
+function updateDarkBtn() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.querySelectorAll('.dark-toggle').forEach(b => b.textContent = isDark ? '☀️' : '🌙');
+}
+const origToggle = toggleDarkMode;
+window.toggleDarkMode = function() { origToggle(); updateDarkBtn(); };
+</script>
+</body>
+</html>

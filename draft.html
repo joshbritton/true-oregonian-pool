@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Draft — True Oregonian Majors Pool</title>
+<link rel="stylesheet" href="shared.css"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="db.js"></script>
+<style>
+/* ── Draft status bar ── */
+.draft-status {
+  background: var(--navy-mid);
+  padding: 10px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid rgba(197,165,97,.1);
+}
+.ds-round { font-size: .58rem; font-weight: 600; color: rgba(255,255,255,.3); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 2px; }
+.ds-clock { font-family: 'Cormorant Garamond', serif; font-size: 1.05rem; font-weight: 600; color: white; display: flex; align-items: center; gap: 8px; }
+.clock-pulse { width: 6px; height: 6px; background: var(--gold); border-radius: 50%; animation: blink 1.2s infinite; flex-shrink: 0; }
+.ds-progress-label { font-size: .56rem; color: rgba(255,255,255,.25); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 4px; text-align: right; }
+.ds-progress-bar { width: 120px; height: 3px; background: rgba(255,255,255,.08); border-radius: 99px; overflow: hidden; }
+.ds-progress-fill { height: 100%; background: var(--gold); border-radius: 99px; transition: width .5s; }
+
+/* ── Layout ── */
+.draft-layout { display: grid; grid-template-columns: 1fr 340px; gap: 0; min-height: calc(100vh - 160px); }
+@media (max-width: 900px) { .draft-layout { grid-template-columns: 1fr; } }
+
+/* ── Left: field panel ── */
+.field-panel { border-right: 1px solid var(--border); }
+[data-theme="dark"] .field-panel { border-color: var(--border); }
+
+.search-bar {
+  padding: 12px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 50;
+  display: flex; gap: 10px; align-items: center;
+}
+.search-input-wrap {
+  flex: 1; display: flex; align-items: center; gap: 8px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 8px 12px;
+}
+.search-icon { font-size: .85rem; opacity: .4; }
+.search-input {
+  flex: 1; border: none; background: none;
+  font-family: 'DM Sans', sans-serif; font-size: .88rem;
+  color: var(--text); outline: none;
+}
+.search-input::placeholder { color: var(--muted); }
+
+.filter-chips {
+  display: flex; gap: 6px; padding: 8px 16px;
+  overflow-x: auto; scrollbar-width: none;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.filter-chips::-webkit-scrollbar { display: none; }
+
+.chip {
+  flex-shrink: 0; padding: 5px 13px;
+  border: 1px solid var(--border); border-radius: 99px;
+  font-family: 'DM Sans', sans-serif; font-size: .65rem; font-weight: 600;
+  color: var(--muted); background: var(--bg);
+  cursor: pointer; transition: all .15s;
+  white-space: nowrap; letter-spacing: .05em;
+}
+.chip.active { background: var(--navy); border-color: var(--navy); color: var(--gold); }
+[data-theme="dark"] .chip { background: var(--surface-2); }
+[data-theme="dark"] .chip.active { background: var(--navy-mid); }
+
+/* Player list */
+.player-list { background: var(--bg); }
+
+.tier-label {
+  padding: 8px 16px 5px;
+  font-size: .6rem; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .14em;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: sticky; top: 104px; z-index: 40;
+}
+
+.player-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-2, #F5F1EB);
+  transition: background .1s; cursor: pointer;
+  background: var(--surface);
+}
+.player-row:hover { background: var(--surface-2); }
+.player-row.is-picked { opacity: .4; pointer-events: none; }
+
+.player-num { font-family: 'DM Mono', monospace; font-size: .62rem; color: var(--muted); width: 24px; text-align: center; flex-shrink: 0; }
+.player-info { flex: 1; min-width: 0; }
+.player-name { font-size: .88rem; font-weight: 600; color: var(--text); }
+.player-detail { font-size: .64rem; color: var(--muted); margin-top: 1px; }
+
+.odds-badge {
+  font-family: 'DM Mono', monospace; font-size: .7rem; font-weight: 500;
+  padding: 3px 9px; border-radius: 99px; white-space: nowrap; flex-shrink: 0;
+}
+.odds-fav  { background: #EEF3FF; color: var(--navy-light); }
+.odds-mid  { background: var(--surface-2); color: var(--text-2); }
+.odds-long { background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
+[data-theme="dark"] .odds-fav  { background: rgba(30,61,104,.5); color: #8AABDD; }
+[data-theme="dark"] .odds-mid  { background: rgba(255,255,255,.06); color: rgba(255,255,255,.55); }
+[data-theme="dark"] .odds-long { background: transparent; color: rgba(255,255,255,.3); border-color: rgba(255,255,255,.1); }
+
+.pick-btn {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 1.5px solid var(--border); background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .8rem; cursor: pointer; flex-shrink: 0;
+  color: var(--muted); transition: all .15s; font-weight: 700;
+}
+.pick-btn:hover { border-color: var(--navy); color: var(--navy); background: var(--surface-2); }
+.pick-btn.done { background: var(--navy); border-color: var(--navy); color: var(--gold); cursor: default; }
+
+/* ── Right: draft board ── */
+.board-panel {
+  background: var(--surface);
+  display: flex; flex-direction: column;
+}
+
+.board-header {
+  padding: 14px 18px 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: baseline; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+  background: var(--surface);
+}
+.board-title { font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 600; color: var(--navy); }
+[data-theme="dark"] .board-title { color: var(--gold); }
+.board-meta { font-family: 'DM Mono', monospace; font-size: .65rem; color: var(--muted); }
+
+.board-scroll { flex: 1; overflow-y: auto; }
+
+.board-round-label {
+  padding: 5px 18px 4px;
+  font-size: .58rem; font-weight: 700; color: rgba(197,165,97,.8);
+  text-transform: uppercase; letter-spacing: .14em;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+}
+
+.board-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 18px;
+  border-bottom: 1px solid var(--border-2, #F5F1EB);
+}
+.board-row.on-clock { background: rgba(197,165,97,.06); }
+.br-num { font-family: 'DM Mono', monospace; font-size: .62rem; color: var(--muted); width: 22px; flex-shrink: 0; }
+.br-name { font-size: .82rem; font-weight: 600; color: var(--navy); width: 90px; flex-shrink: 0; }
+[data-theme="dark"] .br-name { color: rgba(255,255,255,.8); }
+.br-name.on-clock-name { color: var(--gold); }
+.br-pick { flex: 1; }
+.br-golfer { font-size: .82rem; font-weight: 500; color: var(--text); }
+.br-odds { font-family: 'DM Mono', monospace; font-size: .62rem; color: var(--muted); margin-left: 5px; }
+.br-empty { font-size: .75rem; color: var(--border); font-style: italic; }
+.br-undo { background: none; border: none; cursor: pointer; color: var(--muted); font-size: .7rem; padding: 0 0 0 6px; opacity: .5; }
+.br-undo:hover { color: #e53935; opacity: 1; }
+
+/* All done */
+.draft-complete {
+  padding: 32px 20px; text-align: center;
+}
+.draft-complete h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; color: var(--navy); margin-bottom: 8px; }
+[data-theme="dark"] .draft-complete h3 { color: var(--gold); }
+.draft-complete p { color: var(--muted); font-size: .88rem; margin-bottom: 20px; }
+
+/* Loading / empty */
+.panel-empty { padding: 60px 24px; text-align: center; color: var(--muted); font-size: .88rem; }
+
+@media (max-width: 900px) {
+  .draft-layout { grid-template-columns: 1fr; }
+  .field-panel { border-right: none; }
+  .board-panel { display: none; }
+  .draft-status { padding: 10px 14px; }
+  .search-bar { padding: 10px 14px; }
+  .filter-chips { padding: 7px 14px; }
+  .player-row { padding: 9px 14px; }
+  .tier-label { top: 98px; }
+}
+</style>
+</head>
+<body>
+
+<div class="site-header">
+  <div class="header-brand">
+    <div class="pga-seal">
+      <span class="seal-pga">PGA</span>
+      <div class="seal-line"></div>
+      <span class="seal-year">2026</span>
+    </div>
+    <div class="brand-text">
+      <div class="pool-name">True Oregonian Majors Pool</div>
+      <div class="tournament-name" id="t-name">Draft Board</div>
+    </div>
+  </div>
+  <nav class="header-nav">
+    <a class="nav-link" href="index.html">⛳ <span class="nav-label">Leaderboard</span></a>
+    <a class="nav-link active" href="draft.html">📋 <span class="nav-label">Draft</span></a>
+    <a class="nav-link" href="setup.html">⚙️ <span class="nav-label">Setup</span></a>
+    <button class="dark-toggle" onclick="toggleDarkMode()" title="Toggle dark mode">🌙</button>
+  </nav>
+</div>
+
+<!-- Draft status bar -->
+<div class="draft-status" id="draft-status" style="display:none">
+  <div>
+    <div class="ds-round" id="ds-round">Round —</div>
+    <div class="ds-clock"><span class="clock-pulse"></span><span id="ds-who">—</span></div>
+  </div>
+  <div>
+    <div class="ds-progress-label" id="ds-progress-label">— of — picks</div>
+    <div class="ds-progress-bar"><div class="ds-progress-fill" id="ds-fill" style="width:0%"></div></div>
+  </div>
+</div>
+
+<div id="loading" style="text-align:center;padding:80px;color:var(--muted)">Loading draft...</div>
+<div id="no-tournament" style="display:none;text-align:center;padding:80px 24px;color:var(--muted)">
+  <p>No tournament set up yet. <a href="setup.html" style="color:var(--gold)">Go to Setup →</a></p>
+</div>
+
+<div class="draft-layout" id="draft-app" style="display:none">
+
+  <!-- Left: Player picker -->
+  <div class="field-panel">
+    <div class="search-bar">
+      <div class="search-input-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" id="search-input" type="text" placeholder="Search player..." oninput="filterPlayers()"/>
+      </div>
+    </div>
+    <div class="filter-chips" id="filter-chips">
+      <div class="chip active" onclick="setFilter('all',this)">All</div>
+      <div class="chip" onclick="setFilter('favorites',this)">Favorites</div>
+      <div class="chip" onclick="setFilter('contenders',this)">Contenders</div>
+      <div class="chip" onclick="setFilter('value',this)">Value</div>
+      <div class="chip" onclick="setFilter('longshots',this)">Longshots</div>
+      <div class="chip" onclick="setFilter('available',this)">Available</div>
+    </div>
+    <div class="player-list" id="player-list"></div>
+  </div>
+
+  <!-- Right: Draft board -->
+  <div class="board-panel">
+    <div class="board-header">
+      <div class="board-title">Draft Board</div>
+      <div class="board-meta" id="board-meta">—</div>
+    </div>
+    <div class="board-scroll" id="board-scroll"></div>
+  </div>
+
+</div>
+
+<script>
+// ── PGA Championship 2026 field with odds ────────────────────
+const FIELD = [
+  // Favorites
+  { name:'Scottie Scheffler',    country:'🇺🇸',  odds:'+480',   tier:'favorites' },
+  { name:'Rory McIlroy',         country:'🇬🇧',  odds:'+850',   tier:'favorites' },
+  { name:'Cameron Young',        country:'🇺🇸',  odds:'+1200',  tier:'favorites' },
+  { name:'Jon Rahm',             country:'🇪🇸',  odds:'+1500',  tier:'favorites' },
+  { name:'Xander Schauffele',    country:'🇺🇸',  odds:'+1600',  tier:'favorites' },
+  { name:'Ludvig Åberg',         country:'🇸🇪',  odds:'+1800',  tier:'favorites' },
+  // Contenders
+  { name:'Bryson DeChambeau',    country:'🇺🇸',  odds:'+2000',  tier:'contenders' },
+  { name:'Tommy Fleetwood',      country:'🇬🇧',  odds:'+2500',  tier:'contenders' },
+  { name:'Collin Morikawa',      country:'🇺🇸',  odds:'+2800',  tier:'contenders' },
+  { name:'Viktor Hovland',       country:'🇳🇴',  odds:'+3000',  tier:'contenders' },
+  { name:'Patrick Cantlay',      country:'🇺🇸',  odds:'+3500',  tier:'contenders' },
+  { name:'Russell Henley',       country:'🇺🇸',  odds:'+3500',  tier:'contenders' },
+  { name:'Hideki Matsuyama',     country:'🇯🇵',  odds:'+4000',  tier:'contenders' },
+  { name:'Matt Fitzpatrick',     country:'🇬🇧',  odds:'+4500',  tier:'contenders' },
+  { name:'Brooks Koepka',        country:'🇺🇸',  odds:'+5000',  tier:'contenders' },
+  // Value
+  { name:'Justin Thomas',        country:'🇺🇸',  odds:'+5500',  tier:'value' },
+  { name:'Justin Rose',          country:'🇬🇧',  odds:'+5500',  tier:'value' },
+  { name:'Shane Lowry',          country:'🇮🇪',  odds:'+6000',  tier:'value' },
+  { name:'Min Woo Lee',          country:'🇦🇺',  odds:'+6000',  tier:'value' },
+  { name:'J.J. Spaun',           country:'🇺🇸',  odds:'+6600',  tier:'value' },
+  { name:'Akshay Bhatia',        country:'🇺🇸',  odds:'+6500',  tier:'value' },
+  { name:'Robert MacIntyre',     country:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', odds:'+7000',  tier:'value' },
+  { name:'Sungjae Im',           country:'🇰🇷',  odds:'+8000',  tier:'value' },
+  { name:'Si Woo Kim',           country:'🇰🇷',  odds:'+9000',  tier:'value' },
+  { name:'Patrick Reed',         country:'🇺🇸',  odds:'+9000',  tier:'value' },
+  { name:'Jacob Bridgeman',      country:'🇺🇸',  odds:'+9500',  tier:'value' },
+  { name:'Cameron Smith',        country:'🇦🇺',  odds:'+10000', tier:'value' },
+  // Longshots
+  { name:'Sepp Straka',          country:'🇦🇹',  odds:'+10000', tier:'longshots' },
+  { name:'Adam Scott',           country:'🇦🇺',  odds:'+10000', tier:'longshots' },
+  { name:'Chris Gotterup',       country:'🇺🇸',  odds:'+12000', tier:'longshots' },
+  { name:'Nicolai Højgaard',     country:'🇩🇰',  odds:'+13000', tier:'longshots' },
+  { name:'Jake Knapp',           country:'🇺🇸',  odds:'+15000', tier:'longshots' },
+  { name:'Max Homa',             country:'🇺🇸',  odds:'+20000', tier:'longshots' },
+  { name:'Bubba Watson',         country:'🇺🇸',  odds:'+25000', tier:'longshots' },
+  { name:'Corey Conners',        country:'🇨🇦',  odds:'+25000', tier:'longshots' },
+  { name:'J.T. Poston',          country:'🇺🇸',  odds:'+25000', tier:'longshots' },
+  { name:'Jordan Spieth',        country:'🇺🇸',  odds:'+28000', tier:'longshots' },
+  { name:'Keegan Bradley',       country:'🇺🇸',  odds:'+30000', tier:'longshots' },
+  { name:'Harris English',       country:'🇺🇸',  odds:'+35000', tier:'longshots' },
+  { name:'Davis Riley',          country:'🇺🇸',  odds:'+35000', tier:'longshots' },
+  { name:'Tom Kim',              country:'🇰🇷',  odds:'+40000', tier:'longshots' },
+  { name:'Michael Block',        country:'🇺🇸',  odds:'+50000', tier:'longshots' },
+  { name:'Y.E. Yang',            country:'🇰🇷',  odds:'+200000',tier:'longshots' },
+];
+
+// ── State ────────────────────────────────────────────────────
+let tournament, participants, picks, draftOrder, currentPickIdx;
+let activeFilter = 'all';
+let searchQuery = '';
+
+// ── Boot ─────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  initDarkMode(); updateDarkBtn();
+  try {
+    tournament   = await getTournament();
+    if (!tournament) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('no-tournament').style.display = 'block';
+      return;
+    }
+    document.getElementById('t-name').textContent = tournament.name;
+    participants = await getParticipants(tournament.id);
+    picks        = await getPicks(tournament.id);
+    buildDraftOrder();
+    render();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('draft-app').style.display = 'grid';
+    document.getElementById('draft-status').style.display = 'flex';
+    startPolling();
+  } catch(e) {
+    document.getElementById('loading').textContent = 'Error: ' + e.message;
+  }
+});
+
+// ── Snake draft order ────────────────────────────────────────
+function buildDraftOrder() {
+  draftOrder = [];
+  const n = participants.length;
+  for (let round = 1; round <= CONFIG.picksPerPlayer; round++) {
+    const order = round % 2 === 1 ? [...participants] : [...participants].reverse();
+    order.forEach((p, i) => {
+      draftOrder.push({ participant: p, round, pickNumber: (round-1)*n + i + 1 });
+    });
+  }
+}
+
+function updateCurrentPickIdx() {
+  currentPickIdx = Math.min(picks.length, draftOrder.length - 1);
+  if (picks.length >= draftOrder.length) currentPickIdx = draftOrder.length;
+}
+
+// ── Render ───────────────────────────────────────────────────
+function render() {
+  updateCurrentPickIdx();
+  renderStatusBar();
+  renderPlayerList();
+  renderBoard();
+}
+
+function renderStatusBar() {
+  const done = picks.length >= draftOrder.length;
+  const total = draftOrder.length;
+  const made  = picks.length;
+  document.getElementById('ds-progress-label').textContent = `${made} of ${total} picks`;
+  document.getElementById('ds-fill').style.width = (made/total*100) + '%';
+  if (!done && currentPickIdx < draftOrder.length) {
+    const slot = draftOrder[currentPickIdx];
+    document.getElementById('ds-round').textContent = `Round ${slot.round} of ${CONFIG.picksPerPlayer}`;
+    document.getElementById('ds-who').textContent = slot.participant.name;
+  } else if (done) {
+    document.getElementById('ds-round').textContent = 'Draft Complete';
+    document.getElementById('ds-who').textContent = '🏆 All picks made';
+  }
+}
+
+function oddsClass(tier) {
+  if (tier === 'favorites') return 'odds-fav';
+  if (tier === 'contenders' || tier === 'value') return 'odds-mid';
+  return 'odds-long';
+}
+
+function renderPlayerList() {
+  const pickedNames = new Set(picks.map(p => normalizeName(p.golfer_name)));
+  const list = document.getElementById('player-list');
+  list.innerHTML = '';
+  const q = searchQuery.toLowerCase().trim();
+
+  const tiers = [
+    { id:'favorites',  label:'Favorites' },
+    { id:'contenders', label:'Contenders' },
+    { id:'value',      label:'Value Picks' },
+    { id:'longshots',  label:'Longshots' },
+  ];
+
+  let globalNum = 0;
+  tiers.forEach(tier => {
+    const players = FIELD.filter(p => {
+      if (activeFilter !== 'all' && activeFilter !== 'available' && p.tier !== activeFilter) return false;
+      if (activeFilter === 'available' && pickedNames.has(normalizeName(p.name))) return false;
+      if (q && !p.name.toLowerCase().includes(q)) return false;
+      if (activeFilter === 'all' || activeFilter === 'available') return true;
+      return p.tier === activeFilter;
+    }).filter(p => {
+      if (activeFilter !== 'all' && activeFilter !== 'available') return true;
+      return p.tier === tier.id;
+    });
+
+    if (!players.length) return;
+
+    const labelEl = document.createElement('div');
+    labelEl.className = 'tier-label';
+    labelEl.textContent = tier.label;
+    list.appendChild(labelEl);
+
+    players.forEach(player => {
+      globalNum++;
+      const isPicked = pickedNames.has(normalizeName(player.name));
+      const row = document.createElement('div');
+      row.className = 'player-row' + (isPicked ? ' is-picked' : '');
+      row.innerHTML = `
+        <span class="player-num">${globalNum}</span>
+        <div class="player-info">
+          <div class="player-name">${player.name}</div>
+          <div class="player-detail">${player.country}</div>
+        </div>
+        <span class="odds-badge ${oddsClass(player.tier)}">${player.odds}</span>
+        <button class="pick-btn ${isPicked ? 'done' : ''}" onclick="submitPick('${player.name}','${player.odds}',this)" ${isPicked ? 'disabled' : ''}>
+          ${isPicked ? '✓' : '+'}
+        </button>`;
+      list.appendChild(row);
+    });
+  });
+
+  if (!list.children.length) {
+    list.innerHTML = '<div class="panel-empty">No players match</div>';
+  }
+}
+
+function renderBoard() {
+  const scroll = document.getElementById('board-scroll');
+  const isDone = picks.length >= draftOrder.length;
+  document.getElementById('board-meta').textContent = `${picks.length} / ${draftOrder.length}`;
+
+  if (isDone) {
+    scroll.innerHTML = `<div class="draft-complete">
+      <h3>🏆 Draft Complete</h3>
+      <p>All ${draftOrder.length} picks have been made.</p>
+      <a href="index.html" class="btn-primary">View Leaderboard →</a>
+    </div>`;
+    return;
+  }
+
+  let html = '';
+  let lastRound = 0;
+  draftOrder.forEach((slot, idx) => {
+    if (slot.round !== lastRound) {
+      html += `<div class="board-round-label">Round ${slot.round}</div>`;
+      lastRound = slot.round;
+    }
+    const pick = picks.find(p => p.participant_id === slot.participant.id && p.round === slot.round);
+    const isActive = idx === currentPickIdx;
+    const nameClass = isActive ? 'on-clock-name' : '';
+    html += `<div class="board-row ${isActive?'on-clock':''}">
+      <span class="br-num">${slot.pickNumber}</span>
+      <span class="br-name ${nameClass}">${slot.participant.name}</span>
+      <div class="br-pick">
+        ${pick
+          ? `<span class="br-golfer">${pick.golfer_name}</span>
+             <span class="br-odds">${getOdds(pick.golfer_name)}</span>
+             <button class="br-undo" onclick="undoPick('${pick.id}')" title="Undo">✕</button>`
+          : isActive
+            ? `<span class="br-golfer" style="color:var(--gold);font-style:italic">On the clock…</span>`
+            : `<span class="br-empty">—</span>`
+        }
+      </div>
+    </div>`;
+  });
+  scroll.innerHTML = html;
+
+  // Scroll active row into view on board
+  const onClockEl = scroll.querySelector('.on-clock');
+  if (onClockEl) onClockEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function getOdds(name) {
+  const p = FIELD.find(f => normalizeName(f.name) === normalizeName(name));
+  return p ? p.odds : '';
+}
+
+// ── Submit pick ───────────────────────────────────────────────
+async function submitPick(golferName, odds, btn) {
+  if (currentPickIdx >= draftOrder.length) return;
+  const slot = draftOrder[currentPickIdx];
+  btn.disabled = true; btn.textContent = '…';
+  try {
+    await savePick({
+      tournamentId:  tournament.id,
+      participantId: slot.participant.id,
+      golferName,
+      pickNumber:    slot.pickNumber,
+      round:         slot.round,
+    });
+    picks = await getPicks(tournament.id);
+    render();
+  } catch(e) {
+    btn.disabled = false; btn.textContent = '+';
+    alert('Error saving pick: ' + e.message);
+  }
+}
+
+async function undoPick(pickId) {
+  if (!confirm('Remove this pick?')) return;
+  try {
+    await deletePick(pickId);
+    picks = await getPicks(tournament.id);
+    render();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ── Filter & search ───────────────────────────────────────────
+function setFilter(id, el) {
+  activeFilter = id;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderPlayerList();
+}
+
+function filterPlayers() {
+  searchQuery = document.getElementById('search-input').value;
+  renderPlayerList();
+}
+
+// ── Polling ───────────────────────────────────────────────────
+function startPolling() {
+  setInterval(async () => {
+    picks = await getPicks(tournament.id);
+    render();
+  }, 8000);
+}
+
+function updateDarkBtn() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.querySelectorAll('.dark-toggle').forEach(b => b.textContent = isDark ? '☀️' : '🌙');
+}
+
+const origToggle = toggleDarkMode;
+window.toggleDarkMode = function() { origToggle(); updateDarkBtn(); };
+</script>
+</body>
+</html>

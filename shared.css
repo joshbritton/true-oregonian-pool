@@ -1,0 +1,312 @@
+/* ============================================================
+   shared.css — True Oregonian Majors Pool
+   All pages import this. Dark mode via [data-theme="dark"].
+============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+/* ── Light mode tokens ── */
+:root {
+  --navy:        #0B1F3A;
+  --navy-mid:    #152D4E;
+  --navy-light:  #1E3D68;
+  --gold:        #C5A561;
+  --gold-dim:    rgba(197,165,97,.55);
+  --under:       #0A5C2A;
+  --under-bg:    #F0FAF4;
+
+  --bg:          #FAF8F3;
+  --surface:     #FFFFFF;
+  --surface-2:   #F5F1E8;
+  --border:      #E2DDD4;
+  --border-2:    #EDE9E0;
+
+  --text:        #1A2332;
+  --text-2:      #4A5568;
+  --muted:       #7A8A9A;
+
+  --radius:      4px;
+  --radius-lg:   10px;
+
+  /* header always stays dark */
+  --header-bg:   #0B1F3A;
+  --header-border: rgba(197,165,97,.2);
+}
+
+/* ── Dark mode tokens ── */
+[data-theme="dark"] {
+  --bg:          #0D1829;
+  --surface:     #111E30;
+  --surface-2:   #152D4E;
+  --border:      rgba(255,255,255,.08);
+  --border-2:    rgba(255,255,255,.05);
+
+  --text:        rgba(255,255,255,.9);
+  --text-2:      rgba(255,255,255,.55);
+  --muted:       rgba(255,255,255,.3);
+
+  --under:       #4ABA76;
+  --under-bg:    rgba(74,186,118,.08);
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  transition: background .25s, color .25s;
+}
+
+/* ── Shared header ── */
+.site-header {
+  background: var(--header-bg);
+  padding: 0 24px;
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--header-border);
+  position: sticky;
+  top: 0;
+  z-index: 200;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px 14px 0;
+  border-right: 1px solid rgba(255,255,255,.06);
+  margin-right: 20px;
+}
+
+.pga-seal {
+  width: 40px; height: 40px;
+  border: 1.5px solid var(--gold);
+  border-radius: 50%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.seal-pga  { font-family: 'Cormorant Garamond', serif; font-size: .7rem; font-weight: 700; color: var(--gold); letter-spacing: .1em; line-height: 1; }
+.seal-line { width: 18px; height: 1px; background: rgba(197,165,97,.35); margin: 2px 0; }
+.seal-year { font-family: 'DM Mono', monospace; font-size: .46rem; color: rgba(197,165,97,.55); letter-spacing: .06em; }
+
+.brand-text .pool-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem; font-weight: 600;
+  color: white; line-height: 1;
+}
+.brand-text .tournament-name {
+  font-size: .65rem; color: var(--gold);
+  letter-spacing: .1em; text-transform: uppercase;
+  margin-top: 3px; font-weight: 500;
+}
+
+.header-nav {
+  display: flex;
+  align-items: stretch;
+  margin-left: auto;
+  gap: 0;
+}
+
+.nav-link {
+  display: flex; align-items: center;
+  padding: 0 18px;
+  color: rgba(255,255,255,.38);
+  text-decoration: none;
+  font-size: .7rem; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all .2s; gap: 6px;
+}
+.nav-link:hover { color: rgba(255,255,255,.75); }
+.nav-link.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+.dark-toggle {
+  background: none; border: none;
+  padding: 0 16px;
+  font-size: 1rem; cursor: pointer;
+  display: flex; align-items: center;
+  color: rgba(255,255,255,.4);
+  transition: color .2s;
+}
+.dark-toggle:hover { color: var(--gold); }
+
+/* ── Ticker ── */
+.ticker-wrap {
+  background: #0A1624;
+  border-bottom: 1px solid rgba(197,165,97,.12);
+  display: flex; align-items: center;
+  height: 34px; overflow: hidden;
+}
+
+[data-theme="dark"] .ticker-wrap { background: rgba(0,0,0,.4); }
+
+.ticker-label {
+  background: rgba(197,165,97,.1);
+  border-right: 1px solid rgba(197,165,97,.15);
+  color: var(--gold);
+  font-size: .58rem; font-weight: 700;
+  padding: 0 14px; white-space: nowrap;
+  letter-spacing: .14em; text-transform: uppercase;
+  height: 100%; display: flex; align-items: center;
+  flex-shrink: 0;
+}
+
+.ticker-scroll { overflow: hidden; flex: 1; height: 100%; }
+.ticker-track {
+  display: flex; align-items: center; height: 100%;
+  white-space: nowrap;
+  animation: ticker 22s linear infinite;
+}
+.ticker-track:hover { animation-play-state: paused; }
+@keyframes ticker { 0% { transform: translateX(0) } 100% { transform: translateX(-50%) } }
+
+.ticker-item {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 0 14px;
+  border-right: 1px solid rgba(255,255,255,.05);
+  font-size: .7rem;
+}
+.t-pos   { font-family: 'DM Mono', monospace; font-size: .6rem; color: rgba(197,165,97,.65); font-weight: 600; }
+.t-name  { color: rgba(255,255,255,.75); font-weight: 500; }
+.t-name.picked { color: var(--gold); font-weight: 700; }
+.t-score { font-family: 'DM Mono', monospace; font-size: .66rem; font-weight: 600; }
+.t-score.under { color: #4ABA76; }
+.t-score.even  { color: rgba(255,255,255,.35); }
+.t-score.over  { color: rgba(255,255,255,.45); }
+.t-dot   { color: rgba(197,165,97,.2); font-size: .45rem; padding: 0 2px; }
+
+/* ── Stat bar ── */
+.stat-bar {
+  background: var(--navy-mid);
+  border-bottom: 1px solid rgba(197,165,97,.08);
+  display: flex; height: 56px;
+}
+
+.stat-item {
+  flex: 1; display: flex; flex-direction: column;
+  justify-content: center; padding: 0 20px;
+  border-right: 1px solid rgba(255,255,255,.05);
+}
+.stat-item:last-child { border-right: none; }
+
+.stat-label {
+  font-size: .55rem; color: rgba(255,255,255,.28);
+  font-weight: 600; text-transform: uppercase;
+  letter-spacing: .12em; margin-bottom: 3px;
+}
+.stat-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem; font-weight: 600;
+  color: rgba(255,255,255,.88); line-height: 1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.stat-value.gold { color: var(--gold); }
+.stat-sub {
+  font-family: 'DM Mono', monospace;
+  font-size: .54rem; color: rgba(255,255,255,.26); margin-top: 2px;
+}
+.stat-sub.green { color: #4ABA76; }
+
+/* ── Weather strip ── */
+.weather-strip {
+  background: rgba(7,14,26,.92);
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  padding: 5px 24px;
+  display: flex; align-items: center; gap: 10px;
+}
+[data-theme="dark"] .weather-strip { background: rgba(0,0,0,.35); }
+
+.w-icon   { font-size: .75rem; opacity: .45; }
+.w-temp   { font-family: 'DM Mono', monospace; font-size: .68rem; color: rgba(255,255,255,.45); }
+.w-cond   { font-size: .6rem; color: rgba(255,255,255,.22); text-transform: uppercase; letter-spacing: .06em; }
+.w-sep    { width: 1px; height: 10px; background: rgba(255,255,255,.08); flex-shrink: 0; }
+.w-forecast { display: flex; align-items: center; gap: 8px; }
+.w-day    { display: flex; align-items: center; gap: 4px; }
+.w-day-name { font-size: .58rem; font-weight: 600; color: rgba(255,255,255,.2); text-transform: uppercase; letter-spacing: .05em; }
+.w-day-hi   { font-family: 'DM Mono', monospace; font-size: .62rem; color: rgba(255,255,255,.32); }
+.w-day-rain { font-size: .56rem; color: #3A6A9A; }
+.live-dot-wrap { margin-left: auto; display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+.live-dot { width: 5px; height: 5px; background: #3CB96A; border-radius: 50%; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.2} }
+.live-text { font-size: .58rem; color: rgba(255,255,255,.22); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+
+/* ── Shared button ── */
+.btn-primary {
+  background: var(--navy);
+  color: var(--gold);
+  border: 1px solid rgba(197,165,97,.25);
+  border-radius: var(--radius);
+  padding: 11px 24px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: .78rem; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+  transition: all .2s; text-decoration: none;
+}
+.btn-primary:hover { background: var(--navy-light); border-color: var(--gold); }
+
+[data-theme="dark"] .btn-primary { background: var(--surface-2); border-color: rgba(197,165,97,.2); }
+
+/* ── Tabs ── */
+.page-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.page-tab {
+  padding: 11px 22px;
+  background: none; border: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: .68rem; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase;
+  cursor: pointer; color: var(--muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px; transition: all .15s;
+}
+.page-tab.active { color: var(--navy); border-bottom-color: var(--navy); }
+[data-theme="dark"] .page-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+/* ── Cards ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,.05);
+}
+[data-theme="dark"] .card { box-shadow: 0 1px 8px rgba(0,0,0,.3); }
+
+.card-header {
+  background: var(--navy);
+  padding: 11px 18px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid rgba(197,165,97,.15);
+}
+.card-header h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: .95rem; font-weight: 600;
+  color: white; letter-spacing: .04em;
+}
+.card-header .card-meta {
+  font-family: 'DM Mono', monospace;
+  font-size: .65rem; color: rgba(197,165,97,.55);
+}
+
+/* ── Score colors ── */
+.under { color: var(--under); }
+.even  { color: var(--muted); }
+.over  { color: var(--text-2); }
+
+/* ── Monospace numbers ── */
+.mono { font-family: 'DM Mono', monospace; }
+
+/* ── Blink animation ── */
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
