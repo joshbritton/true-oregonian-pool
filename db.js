@@ -3,8 +3,7 @@
 //  Requires config.js to be loaded first.
 // ============================================================
 
-const { createClient } = supabase;
-const db = createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
+const db = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
 
 // ── Tournaments ──────────────────────────────────────────────
 
