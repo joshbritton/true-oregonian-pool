@@ -96,8 +96,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 /* ── WEATHER ── */
 .wx{background:rgba(6,12,24,.95);border-bottom:1px solid rgba(255,255,255,.04);padding:4px 14px;display:flex;align-items:center;gap:7px;flex-shrink:0;overflow-x:auto;scrollbar-width:none;}
 .wx::-webkit-scrollbar{display:none;}
-.wx-temp{font-family:'DM Mono',monospace;font-size:.64rem;color:rgba(255,255,255,.4);}
+.wx-venue{font-size:.55rem;font-weight:600;color:rgba(255,255,255,.2);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;flex-shrink:0;}
+.wx-temp{font-family:'DM Mono',monospace;font-size:.64rem;color:rgba(255,255,255,.4);white-space:nowrap;}
 .wx-cond{font-size:.56rem;color:rgba(255,255,255,.22);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;}
+.wx-wind{font-family:'DM Mono',monospace;font-size:.6rem;color:rgba(255,255,255,.3);white-space:nowrap;}
 .wx-sep{width:1px;height:9px;background:rgba(255,255,255,.08);flex-shrink:0;}
 .wx-fc{display:flex;align-items:center;gap:7px;flex-shrink:0;}
 .wx-d{display:flex;align-items:center;gap:3px;}
@@ -250,8 +252,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 
 <!-- Weather -->
 <div class="wx" id="wx" style="display:none">
+  <span class="wx-venue">Aronimink GC · Newtown Square, PA</span>
+  <div class="wx-sep"></div>
   <span class="wx-temp" id="wx-temp">—</span>
   <span class="wx-cond" id="wx-cond">—</span>
+  <span class="wx-wind" id="wx-wind"></span>
   <div class="wx-sep"></div>
   <div class="wx-fc" id="wx-fc"></div>
   <div class="live-wrap"><div class="live-dot"></div><span class="live-lbl">Live</span></div>
@@ -404,8 +409,15 @@ function renderAll(s){
 }
 
 function renderTicker(s){
-  if(!s.length)return;
   const track=document.getElementById('ticker-track');
+  if(!s.length){
+    // Pre-tournament placeholder using the draft picks
+    if(!picks.length){document.getElementById('ticker').style.display='none';return;}
+    const items=picks.slice(0,20).map(pk=>`<span class="ti"><span class="ti-pos">—</span><span class="ti-name pk">${ln(pk.golfer_name)}</span><span class="ti-sc e">TBD</span></span><span class="ti-dot">·</span>`).join('');
+    track.innerHTML=items+items;
+    document.getElementById('ticker').style.display='flex';
+    return;
+  }
   const items=s.slice(0,20).map(g=>{
     const pk=picks.some(p=>nm(p.golfer_name)===nm(g.name));
     return`<span class="ti"><span class="ti-pos">${g.pos||'—'}</span><span class="ti-name${pk?' pk':''}">${ln(g.name)}</span><span class="ti-sc ${sc(g.score)}">${fs(g.score)}</span></span><span class="ti-dot">·</span>`;
@@ -451,7 +463,7 @@ function renderField(s){
   const tbody=document.getElementById('field-tbody');tbody.innerHTML='';
   const om={};
   picks.forEach(pk=>{const k=nm(pk.golfer_name);if(!om[k])om[k]=[];const p=participants.find(p=>p.id===pk.participant_id);if(p)om[k].push(p.name);});
-  if(!s.length){tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted)">No live scores yet</td></tr>`;return;}
+  if(!s.length){tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted);font-size:.85rem">Live scoring begins Thursday, May 14 · Check back when the tournament starts</td></tr>`;return;}
   s.forEach(g=>{
     const owners=om[nm(g.name)]||[];const win=payouts[g.name]||0;
     const tr=document.createElement('tr');
@@ -467,7 +479,7 @@ function renderTT(s){
   const grps={};
   s.forEach(g=>{const t=g.teeTime||'TBD';if(!grps[t])grps[t]=[];grps[t].push(g);});
   const keys=Object.keys(grps);
-  if(!keys.length||keys.length===1&&grps['TBD']){body.innerHTML='<div class="empty-msg">Tee times will appear here once the field is announced.</div>';return;}
+  if(!keys.length||keys.length===1&&grps['TBD']){body.innerHTML='<div class="empty-msg">Tee times will appear here once pairings are announced — typically Wednesday evening before the tournament.</div>';return;}
   const sorted=keys.sort((a,b)=>{if(a==='TBD')return 1;if(b==='TBD')return-1;return a.localeCompare(b);});
   body.innerHTML=sorted.map(time=>`
     <div class="ttgroup">
@@ -491,13 +503,18 @@ function showTab(id,btn){
 
 async function fetchWx(){
   try{
-    const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=39.9601&longitude=-75.3552&current=temperature_2m,weather_code&daily=temperature_2m_max,precipitation_probability_max&temperature_unit=fahrenheit&timezone=America/New_York&forecast_days=4');
+    const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=39.9601&longitude=-75.3552&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,precipitation_probability_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/New_York&forecast_days=5');
     const d=await r.json();
-    const cm={0:'Clear',1:'Clear',2:'Partly Cloudy',3:'Overcast',51:'Drizzle',61:'Rain',63:'Rain',71:'Snow',80:'Showers',95:'Storms'};
+    const cm={0:'Sunny',1:'Clear',2:'Partly Cloudy',3:'Overcast',51:'Drizzle',61:'Rain',63:'Rain',71:'Snow',80:'Showers',95:'Storms'};
+    const wind=Math.round(d.current.wind_speed_10m);
+    const dirs=['N','NE','E','SE','S','SW','W','NW'];
+    const dir=dirs[Math.round(d.current.wind_direction_10m/45)%8];
     document.getElementById('wx-temp').textContent=Math.round(d.current.temperature_2m)+'°F';
     document.getElementById('wx-cond').textContent=cm[d.current.weather_code]||'—';
+    document.getElementById('wx-wind').textContent=wind+'mph '+dir;
     const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-    document.getElementById('wx-fc').innerHTML=d.daily.time.slice(1,4).map((t,i)=>`<div class="wx-d"><span class="wx-dn">${days[new Date(t).getDay()]}</span><span class="wx-hi">${Math.round(d.daily.temperature_2m_max[i+1])}°</span><span class="wx-rn">${d.daily.precipitation_probability_max[i+1]}%</span></div><div class="wx-sep"></div>`).join('');
+    // Show Thu–Sun (tournament days)
+    document.getElementById('wx-fc').innerHTML=d.daily.time.slice(1,5).map((t,i)=>`<div class="wx-d"><span class="wx-dn">${days[new Date(t).getDay()]}</span><span class="wx-hi">${Math.round(d.daily.temperature_2m_max[i+1])}°</span><span class="wx-rn">${d.daily.precipitation_probability_max[i+1]}%</span></div><div class="wx-sep"></div>`).join('');
     document.getElementById('wx').style.display='flex';
   }catch(e){}
 }
