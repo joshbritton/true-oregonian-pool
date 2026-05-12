@@ -10,7 +10,7 @@ const CONFIG = {
 
   // ── Supabase ─────────────────────────────────────────────
   // Get these from supabase.com → your project → Settings → API
-  supabaseUrl:  "https://eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6Y3dseGFyc2hzZGFvbnd2d2t6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg1NTIwMDQsImV4cCI6MjA5NDEyODAwNH0.i5GtBtI67ue1stPHIUCVqjVMmku7pl2SEUh2NjGbjlE.supabase.co",
+  supabaseUrl:  "https://tzcwlxarshsdaonwvwkz.supabase.co",
   supabaseKey:  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6Y3dseGFyc2hzZGFvbnd2d2t6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODU1MjAwNCwiZXhwIjoyMDk0MTI4MDA0fQ.bjhQWeMRUjG0fdnJ3PhBEtXBAdpw5ur736O2rrnj9SU",
 
   // ── Draft settings ────────────────────────────────────────
