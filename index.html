@@ -382,7 +382,7 @@ async function refresh(){
 function parseAndRender(cs){
   scores=cs.map(c=>({
     name:c.athlete?.displayName||c.displayName||'Unknown',
-    pos:c.status?.position?.displayName||c.status?.displayValue||c.position||'',
+    pos:c.status?.position?.displayName||c.status?.position?.abbreviation||c.status?.displayValue||c.position?.displayName||c.position||'',
     score:ps(c.score||c.totalScore||c.statistics?.find?.(s=>s.name==='total')?.displayValue||''),
     today:c.status?.todayScore||c.linescores?.[c.linescores?.length-1]?.displayValue||'',
     thru:c.status?.thru||c.status?.period||c.thru||'',
@@ -399,7 +399,12 @@ function ps(s){if(!s&&s!==0)return null;const n=parseInt(s,10);return isNaN(n)?n
 function gr(st,i){const s=st[i];if(!s)return null;const v=parseInt(s.displayValue||s.value||s,10);return isNaN(v)?null:v;}
 function calcPay(sc){
   const pct=CONFIG.payoutPercents,purse=tournament.purse,res={},grp={};
-  sc.forEach(g=>{const p=parseInt((g.pos||'').replace(/[^0-9]/g,''),10);if(!isNaN(p)){if(!grp[p])grp[p]=[];grp[p].push(g.name);}});
+  sc.forEach(g=>{
+    // Handle T1, 1, T10 etc — strip non-numeric
+    const raw=String(g.pos||'').replace(/[^0-9]/g,'');
+    const p=parseInt(raw,10);
+    if(!isNaN(p)&&p>0){if(!grp[p])grp[p]=[];grp[p].push(g.name);}
+  });
   Object.entries(grp).forEach(([pos,names])=>{
     const p=parseInt(pos,10);let tot=0;
     for(let i=0;i<names.length;i++)tot+=(pct[p+i]||0);
