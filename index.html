@@ -352,25 +352,47 @@ document.addEventListener('DOMContentLoaded',async()=>{
 
 async function refresh(){
   if(!tournament?.espn_id){renderAll([]);return;}
-  try{
-    const r=await fetch(`https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard/${tournament.espn_id}/competitors`);
-    if(!r.ok){renderAll([]);return;}
-    const j=await r.json();
-    const cs=j?.competitors||j?.events?.[0]?.competitions?.[0]?.competitors||[];
-    scores=cs.map(c=>({
-      name:c.athlete?.displayName||c.displayName||'Unknown',
-      pos:c.status?.position?.displayName||c.position||'',
-      score:ps(c.score||c.totalScore||''),
-      today:c.status?.todayScore||'',
-      thru:c.status?.thru||c.thru||'',
-      r1:gr(c.statistics||c.linescores||[],0),r2:gr(c.statistics||c.linescores||[],1),
-      r3:gr(c.statistics||c.linescores||[],2),r4:gr(c.statistics||c.linescores||[],3),
-      teeTime:c.status?.teeTime||c.teeTime||'',
-      startHole:c.status?.startHole||c.startHole||1,
-    }));
-    payouts=calcPay(scores);
-    renderAll(scores);
-  }catch(e){console.error(e);}
+  const id=tournament.espn_id;
+  // Try multiple ESPN endpoint formats — they change periodically
+  const endpoints=[
+    `https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard?event=${id}`,
+    `https://site.api.espn.com/apis/site/v2/sports/golf/pga/summary?event=${id}`,
+    `https://site.api.espn.com/apis/site/v2/sports/golf/leaderboard?event=${id}`,
+    `https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard/${id}/competitors`,
+  ];
+  for(const url of endpoints){
+    try{
+      const r=await fetch(url);
+      if(!r.ok)continue;
+      const j=await r.json();
+      // Try to find competitors array in multiple possible locations
+      const cs=
+        j?.competitors||
+        j?.events?.[0]?.competitions?.[0]?.competitors||
+        j?.event?.competitions?.[0]?.competitors||
+        j?.competition?.competitors||
+        [];
+      if(cs.length>0){parseAndRender(cs);return;}
+    }catch(e){continue;}
+  }
+  // No data found
+  renderAll([]);
+}
+
+function parseAndRender(cs){
+  scores=cs.map(c=>({
+    name:c.athlete?.displayName||c.displayName||'Unknown',
+    pos:c.status?.position?.displayName||c.status?.displayValue||c.position||'',
+    score:ps(c.score||c.totalScore||c.statistics?.find?.(s=>s.name==='total')?.displayValue||''),
+    today:c.status?.todayScore||c.linescores?.[c.linescores?.length-1]?.displayValue||'',
+    thru:c.status?.thru||c.status?.period||c.thru||'',
+    r1:gr(c.statistics||c.linescores||[],0),r2:gr(c.statistics||c.linescores||[],1),
+    r3:gr(c.statistics||c.linescores||[],2),r4:gr(c.statistics||c.linescores||[],3),
+    teeTime:c.status?.teeTime||c.teeTime||'',
+    startHole:c.status?.startHole||c.startHole||1,
+  }));
+  payouts=calcPay(scores);
+  renderAll(scores);
 }
 
 function ps(s){if(!s&&s!==0)return null;const n=parseInt(s,10);return isNaN(n)?null:n;}
