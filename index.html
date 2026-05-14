@@ -280,7 +280,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
   </div>
   <div id="app" style="display:none">
     <div class="tc active" id="tc-teams"><div class="teams-grid" id="teams-grid"></div></div>
-    <div class="tc" id="tc-standings"><table class="stable"><thead><tr><th style="width:36px"></th><th>Player</th><th>Picks</th><th class="r">Winnings</th><th class="r">Best</th></tr></thead><tbody id="standings-tbody"></tbody></table></div>
+    <div class="tc" id="tc-standings"><table class="stable"><thead><tr><th style="width:36px"></th><th>Player</th><th class="r">Score</th><th class="r">Winnings</th><th class="r">Best</th></tr></thead><tbody id="standings-tbody"></tbody></table></div>
     <div class="tc" id="tc-field"><table class="ftable"><thead><tr><th>Pos</th><th>Player</th><th class="c">Score</th><th class="c">Today</th><th class="c">Thru</th><th class="c">R1</th><th class="c">R2</th><th class="c">R3</th><th class="c">R4</th><th class="c">$</th><th>Pool</th></tr></thead><tbody id="field-tbody"></tbody></table></div>
     <div class="tc" id="tc-teetimes"><div id="teetimes-body"></div></div>
   </div>
@@ -380,17 +380,40 @@ async function refresh(){
 }
 
 function parseAndRender(cs){
-  scores=cs.map(c=>({
+  // ESPN doesn't return position — competitors are pre-sorted by score
+  // We derive position from order, handling ties
+  const mapped=cs.map(c=>({
     name:c.athlete?.displayName||c.displayName||'Unknown',
-    pos:c.status?.position?.displayName||c.status?.position?.abbreviation||c.status?.displayValue||c.position?.displayName||c.position||'',
-    score:ps(c.score||c.totalScore||c.statistics?.find?.(s=>s.name==='total')?.displayValue||''),
-    today:c.status?.todayScore||c.linescores?.[c.linescores?.length-1]?.displayValue||'',
-    thru:c.status?.thru||c.status?.period||c.thru||'',
-    r1:gr(c.statistics||c.linescores||[],0),r2:gr(c.statistics||c.linescores||[],1),
-    r3:gr(c.statistics||c.linescores||[],2),r4:gr(c.statistics||c.linescores||[],3),
-    teeTime:c.status?.teeTime||c.teeTime||'',
-    startHole:c.status?.startHole||c.startHole||1,
+    score:ps(c.score||c.linescores?.[0]?.displayValue||''),
+    today:c.linescores?.[0]?.displayValue||'',
+    thru:c.linescores?.[0]?.statistics?.categories?.[0]?.stats?.[5]?.displayValue||'',
+    r1:c.linescores?.[0]?.value!=null?c.linescores[0].value:null,
+    r2:c.linescores?.[1]?.value!=null?c.linescores[1].value:null,
+    r3:c.linescores?.[2]?.value!=null?c.linescores[2].value:null,
+    r4:c.linescores?.[3]?.value!=null?c.linescores[3].value:null,
+    teeTime:'',startHole:1,pos:'',
   }));
+
+  // Sort by score ascending (lower = better), null scores go last
+  mapped.sort((a,b)=>{
+    if(a.score===null&&b.score===null)return 0;
+    if(a.score===null)return 1;
+    if(b.score===null)return-1;
+    return a.score-b.score;
+  });
+
+  // Assign positions with ties
+  mapped.forEach((g,i)=>{
+    if(g.score===null){g.pos='';return;}
+    // Find first player at this score
+    const first=mapped.findIndex(x=>x.score===g.score);
+    const pos=first+1;
+    // Count how many share this score
+    const tied=mapped.filter(x=>x.score===g.score).length;
+    g.pos=tied>1?`T${pos}`:`${pos}`;
+  });
+
+  scores=mapped;
   payouts=calcPay(scores);
   renderAll(scores);
 }
@@ -400,7 +423,6 @@ function gr(st,i){const s=st[i];if(!s)return null;const v=parseInt(s.displayValu
 function calcPay(sc){
   const pct=CONFIG.payoutPercents,purse=tournament.purse,res={},grp={};
   sc.forEach(g=>{
-    // Handle T1, 1, T10 etc — strip non-numeric
     const raw=String(g.pos||'').replace(/[^0-9]/g,'');
     const p=parseInt(raw,10);
     if(!isNaN(p)&&p>0){if(!grp[p])grp[p]=[];grp[p].push(g.name);}
@@ -408,7 +430,8 @@ function calcPay(sc){
   Object.entries(grp).forEach(([pos,names])=>{
     const p=parseInt(pos,10);let tot=0;
     for(let i=0;i<names.length;i++)tot+=(pct[p+i]||0);
-    const per=(tot/names.length/100)*purse;names.forEach(n=>{res[n]=per;});
+    const per=(tot/names.length/100)*purse;
+    names.forEach(n=>{res[n]=per;});
   });
   return res;
 }
@@ -423,9 +446,15 @@ function teams(sc){
   const map={};sc.forEach(g=>{map[nm(g.name)]=g;});
   return participants.map(p=>{
     const my=picks.filter(pk=>pk.participant_id===p.id);
-    let tw=0;
-    const gs=my.map(pk=>{const g=map[nm(pk.golfer_name)]||null;const w=g?(payouts[g.name]||0):0;tw+=w;return{pick:pk,g,w};});
-    return{p,gs,tw};
+    let tw=0,ts=0,hasScore=false;
+    const gs=my.map(pk=>{
+      const g=map[nm(pk.golfer_name)]||null;
+      const w=g?(payouts[g.name]||0):0;
+      tw+=w;
+      if(g&&g.score!==null){ts+=g.score;hasScore=true;}
+      return{pick:pk,g,w};
+    });
+    return{p,gs,tw,ts:hasScore?ts:null};
   }).sort((a,b)=>b.tw-a.tw);
 }
 
@@ -465,11 +494,14 @@ function renderTeams(ts){
   const grid=document.getElementById('teams-grid');grid.innerHTML='';
   ts.forEach((t,rank)=>{
     const rc=rank===0?'r1':rank===1?'r2':rank===2?'r3':'';
+    const tsHtml=t.ts!==null
+      ?`<span style="font-family:'DM Mono',monospace;font-size:.72rem;font-weight:700;color:${t.ts<0?'#4ABA76':t.ts===0?'rgba(255,255,255,.4)':'rgba(255,255,255,.5)'};margin-left:auto;padding-right:2px;flex-shrink:0">${fs(t.ts)}</span>`
+      :'';
     const ph=t.gs.length
       ?t.gs.map(({pick,g,w})=>{const pos=g?.pos||'—';const pn=parseInt((pos||'').replace(/\D/g,''),10);const pc=pn===1?'p1':pn<=5?'pt5':pn<=10?'pt10':'';return`<div class="grow"><span class="gpos ${pc}">${pos}</span><span class="gname">${pick.golfer_name}</span><span class="gscore ${sc(g?.score)}">${g?fs(g.score):'—'}</span><span class="gearn ${w>0?'':'n'}">${w>0?fsh(w):'—'}</span></div>`;}).join('')
       :'<p style="color:var(--muted);font-size:.75rem;padding:5px 0">No picks yet — <a href="draft.html" style="color:var(--gold)">draft</a></p>';
     const c=document.createElement('div');c.className='tcard';
-    c.innerHTML=`<div class="tcard-hdr"><span class="trank ${rc}">${rank+1}</span><div class="tinfo"><div class="tname">${t.p.name}</div><div class="twin">${fm(t.tw)}</div></div></div><div class="tpicks">${ph}</div>`;
+    c.innerHTML=`<div class="tcard-hdr"><span class="trank ${rc}">${rank+1}</span><div class="tinfo"><div class="tname">${t.p.name}</div><div class="twin">${fm(t.tw)}</div></div>${tsHtml}</div><div class="tpicks">${ph}</div>`;
     grid.appendChild(c);
   });
 }
@@ -480,8 +512,9 @@ function renderStandings(ts){
     const rc=rank===0?'r1':rank===1?'r2':rank===2?'r3':'';
     const pills=t.gs.map(({pick,g})=>`<span class="spill">${pick.golfer_name}${g?.pos?' · '+g.pos:''}</span>`).join('');
     const best=t.gs.reduce((b,{g})=>{if(!g)return b;const n=parseInt((g.pos||'999').replace(/\D/g,''),10);return n<b?n:b;},999);
+    const tsStr=t.ts!==null?`<span style="font-family:'DM Mono',monospace;font-weight:700;color:${t.ts<0?'var(--under)':t.ts===0?'var(--muted)':'var(--text-2)'}">${fs(t.ts)}</span>`:'—';
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td><span class="srk ${rc}">${rank+1}</span></td><td><div class="sname">${t.p.name}</div><div class="spills">${pills}</div></td><td style="font-size:.72rem;color:var(--muted)">${t.gs.length} picks</td><td class="r" style="font-weight:600;color:${t.tw>0?'#2D7A4F':'var(--muted)'}">${fm(t.tw)}</td><td class="r" style="color:var(--muted)">${best<999?best:'—'}</td>`;
+    tr.innerHTML=`<td><span class="srk ${rc}">${rank+1}</span></td><td><div class="sname">${t.p.name}</div><div class="spills">${pills}</div></td><td class="r">${tsStr}</td><td class="r" style="font-weight:600;color:${t.tw>0?'#2D7A4F':'var(--muted)'}">${fm(t.tw)}</td><td class="r" style="color:var(--muted)">${best<999?best:'—'}</td>`;
     tbody.appendChild(tr);
   });
 }
