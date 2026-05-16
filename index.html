@@ -418,19 +418,46 @@ function parseAndRender(cs){
   renderAll(scores);
 }
 
-function ps(s){if(!s&&s!==0)return null;const n=parseInt(s,10);return isNaN(n)?null:n;}
+function ps(s){
+  if(s===null||s===undefined||s==='')return null;
+  if(typeof s==='string'&&s.trim().toUpperCase()==='E')return 0;
+  const n=parseInt(s,10);return isNaN(n)?null:n;
+}
 function gr(st,i){const s=st[i];if(!s)return null;const v=parseInt(s.displayValue||s.value||s,10);return isNaN(v)?null:v;}
+
+// Official 2026 PGA Championship payouts — $20.5M purse, 82 players made cut
+const PGA_PAYOUTS={
+  1:3690000,2:2214000,3:1394000,4:984000,5:820000,
+  6:727600,7:681050,8:636400,9:593700,10:553000,
+  11:514160,12:477300,13:442370,14:409390,15:378340,
+  16:349240,17:322080,18:296850,19:273570,20:252230,
+  21:232830,22:215370,23:199840,24:187230,25:175110,
+  26:163460,27:152310,28:141640,29:131450,30:121750,
+  31:113990,32:107200,33:101380,34:96530,35:92650,
+  36:88960,37:85370,38:81880,39:78480,40:75180,
+  41:71980,42:68880,43:65870,44:62960,45:60150,
+  46:57430,47:54810,48:52290,49:49860,50:47540,
+  51:45300,52:43170,53:41130,54:39190,55:37350,
+  56:35600,57:33950,58:32600,59:31430,60:30460,
+  61:29690,62:29120,63:28640,64:28180,65:27740,
+  66:27310,67:26890,68:26480,69:26080,70:25690,
+  71:25310,72:24940,73:24580,74:24230,75:23900,
+  76:23900,77:23900,78:23900,79:23900,80:23900,81:23900,82:23900,
+};
+
 function calcPay(sc){
-  const pct=CONFIG.payoutPercents,purse=tournament.purse,res={},grp={};
+  const res={},grp={};
   sc.forEach(g=>{
     const raw=String(g.pos||'').replace(/[^0-9]/g,'');
     const p=parseInt(raw,10);
     if(!isNaN(p)&&p>0){if(!grp[p])grp[p]=[];grp[p].push(g.name);}
   });
   Object.entries(grp).forEach(([pos,names])=>{
-    const p=parseInt(pos,10);let tot=0;
-    for(let i=0;i<names.length;i++)tot+=(pct[p+i]||0);
-    const per=(tot/names.length/100)*purse;
+    const p=parseInt(pos,10);
+    // Sum tied position payouts and split equally
+    let tot=0;
+    for(let i=0;i<names.length;i++)tot+=(PGA_PAYOUTS[p+i]||0);
+    const per=tot/names.length;
     names.forEach(n=>{res[n]=per;});
   });
   return res;
@@ -442,13 +469,41 @@ function ln(n){if(!n)return'';const p=n.split(' ');return p[p.length-1];}
 function fm(n){return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n||0);}
 function fsh(n){if(n>=1e6)return'$'+(n/1e6).toFixed(2)+'M';if(n>=1000)return'$'+Math.round(n/1000)+'K';return'$'+Math.round(n);}
 
+// Build a lookup map that supports both full name and last name matching
+function buildScoreMap(sc){
+  const map={};
+  const lastMap={};
+  sc.forEach(g=>{
+    map[nm(g.name)]=g;
+    // Also index by last name for fuzzy fallback
+    const last=nm(g.name).split(' ').pop();
+    if(!lastMap[last])lastMap[last]=[];
+    lastMap[last].push(g);
+  });
+  return{map,lastMap};
+}
+
+// Look up a pick name against ESPN scores - try exact, then last name
+function findGolfer(pickName, map, lastMap){
+  const key=nm(pickName);
+  if(map[key])return map[key];
+  // Try last name fallback
+  const last=key.split(' ').pop();
+  const candidates=lastMap[last]||[];
+  if(candidates.length===1)return candidates[0];
+  // Multiple candidates - try first letter of first name
+  const firstInitial=key[0];
+  const match=candidates.find(g=>nm(g.name)[0]===firstInitial);
+  return match||null;
+}
+
 function teams(sc){
-  const map={};sc.forEach(g=>{map[nm(g.name)]=g;});
+  const{map,lastMap}=buildScoreMap(sc);
   return participants.map(p=>{
     const my=picks.filter(pk=>pk.participant_id===p.id);
     let tw=0,ts=0,hasScore=false;
     const gs=my.map(pk=>{
-      const g=map[nm(pk.golfer_name)]||null;
+      const g=findGolfer(pk.golfer_name,map,lastMap);
       const w=g?(payouts[g.name]||0):0;
       tw+=w;
       if(g&&g.score!==null){ts+=g.score;hasScore=true;}
@@ -464,7 +519,13 @@ function renderAll(s){
   renderTeams(t);renderStandings(t);renderField(s);renderTT(s);
 }
 
-function renderTicker(s){
+function renderStatBar(s){
+  const t=teams(s);
+  if(t.length){document.getElementById('sl-name').textContent=t[0].p.name;document.getElementById('sl-win').textContent=fm(t[0].tw);}
+  if(s.length){document.getElementById('fl-name').textContent=ln(s[0].name);document.getElementById('fl-score').textContent=fs(s[0].score);}
+  const cut=s[69];
+  if(cut){document.getElementById('cut').textContent=fs(cut.score);document.getElementById('cut-n').textContent=s.length+' players';}
+}
   const track=document.getElementById('ticker-track');
   if(!s.length){
     // Pre-tournament placeholder using the draft picks
@@ -521,8 +582,16 @@ function renderStandings(ts){
 
 function renderField(s){
   const tbody=document.getElementById('field-tbody');tbody.innerHTML='';
+  // Build owner map using fuzzy matching
+  const{map:smap,lastMap:slmap}=buildScoreMap(s);
   const om={};
-  picks.forEach(pk=>{const k=nm(pk.golfer_name);if(!om[k])om[k]=[];const p=participants.find(p=>p.id===pk.participant_id);if(p)om[k].push(p.name);});
+  picks.forEach(pk=>{
+    const g=findGolfer(pk.golfer_name,smap,slmap);
+    const key=g?nm(g.name):nm(pk.golfer_name);
+    if(!om[key])om[key]=[];
+    const p=participants.find(p=>p.id===pk.participant_id);
+    if(p)om[key].push(p.name);
+  });
   if(!s.length){tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted);font-size:.85rem">Live scoring begins Thursday, May 14 · Check back when the tournament starts</td></tr>`;return;}
   s.forEach(g=>{
     const owners=om[nm(g.name)]||[];const win=payouts[g.name]||0;
