@@ -519,16 +519,9 @@ function renderAll(s){
   renderTeams(t);renderStandings(t);renderField(s);renderTT(s);
 }
 
-function renderStatBar(s){
-  const t=teams(s);
-  if(t.length){document.getElementById('sl-name').textContent=t[0].p.name;document.getElementById('sl-win').textContent=fm(t[0].tw);}
-  if(s.length){document.getElementById('fl-name').textContent=ln(s[0].name);document.getElementById('fl-score').textContent=fs(s[0].score);}
-  const cut=s[69];
-  if(cut){document.getElementById('cut').textContent=fs(cut.score);document.getElementById('cut-n').textContent=s.length+' players';}
-}
+function renderTicker(s){
   const track=document.getElementById('ticker-track');
   if(!s.length){
-    // Pre-tournament placeholder using the draft picks
     if(!picks.length){document.getElementById('ticker').style.display='none';return;}
     const items=picks.slice(0,20).map(pk=>`<span class="ti"><span class="ti-pos">—</span><span class="ti-name pk">${ln(pk.golfer_name)}</span><span class="ti-sc e">TBD</span></span><span class="ti-dot">·</span>`).join('');
     track.innerHTML=items+items;
