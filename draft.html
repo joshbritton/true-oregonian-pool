@@ -3,7 +3,7 @@
 <head> <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Draft — True Oregonian Majors Pool</title>
+<title>Draft — True Oregonian Majors Pool US Open</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -11,14 +11,14 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --navy:#0B1F3A;--navy-mid:#152D4E;--navy-light:#1E3D68;--gold:#C5A561;
-  --bg:#FAF8F3;--surface:#fff;--surface-2:#F5F1E8;
-  --border:#E2DDD4;--border-2:#EDE9E0;
-  --text:#1A2332;--text-2:#4A5568;--muted:#7A8A9A;
+  --navy:#002147;--navy-mid:#0A2E5A;--navy-light:#1B4F8A;--gold:#B8A96A;
+  --bg:#F8F6F0;--surface:#fff;--surface-2:#F2EEE4;
+  --border:#DDD8CC;--border-2:#E8E4D8;
+  --text:#1A1A2E;--text-2:#4A5568;--muted:#7A8A9A;
   --r:4px;--rlg:10px;
 }
 [data-theme="dark"]{
-  --bg:#0D1829;--surface:#111E30;--surface-2:#152D4E;
+  --bg:#081828;--surface:#0A1E35;--surface-2:#0D2545;
   --border:rgba(255,255,255,.08);--border-2:rgba(255,255,255,.05);
   --text:rgba(255,255,255,.9);--text-2:rgba(255,255,255,.55);--muted:rgba(255,255,255,.3);
 }
@@ -151,24 +151,84 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 
 /* Loading */
 .load-msg{padding:60px;text-align:center;color:var(--muted);}
+
+/* ── FAVORITES QUEUE ── */
+.queue-bar{background:var(--surface);border-bottom:2px solid var(--border);padding:0;flex-shrink:0;overflow:hidden;}
+.queue-bar-inner{display:flex;align-items:stretch;min-height:0;}
+.queue-label{padding:0 12px;font-size:.52rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;white-space:nowrap;border-right:1px solid var(--border);flex-shrink:0;background:var(--surface-2);}
+.queue-scroll{display:flex;align-items:center;gap:6px;padding:7px 12px;overflow-x:auto;scrollbar-width:none;flex:1;}
+.queue-scroll::-webkit-scrollbar{display:none;}
+.queue-empty{font-size:.66rem;color:var(--muted);font-style:italic;padding:0 4px;}
+.queue-pill{display:inline-flex;align-items:center;gap:5px;background:var(--bg);border:1px solid var(--border);border-radius:99px;padding:3px 10px 3px 8px;font-size:.66rem;font-weight:600;color:var(--text);white-space:nowrap;cursor:default;transition:all .15s;}
+.queue-pill.queued{border-color:var(--gold);background:rgba(184,169,106,.08);color:var(--text);}
+.queue-pill.taken{opacity:.4;text-decoration:line-through;pointer-events:none;}
+.queue-pill-name{max-width:90px;overflow:hidden;text-overflow:ellipsis;}
+.queue-pill-remove{width:14px;height:14px;border-radius:50%;background:none;border:none;cursor:pointer;color:var(--muted);font-size:.65rem;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;flex-shrink:0;}
+.queue-pill-remove:hover{color:#e53935;}
+.queue-pill-odds{font-family:'DM Mono',monospace;font-size:.58rem;color:var(--muted);}
+.fav-btn{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--border);background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:var(--muted);transition:all .15s;padding:0;}
+.fav-btn svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;}
+.fav-btn:hover{border-color:var(--gold);color:var(--gold);}
+.fav-btn.queued{border-color:var(--gold);color:var(--gold);}
+.fav-btn.queued svg{fill:var(--gold);}
+
+/* ── UI POLISH ── */
+/* Tighter, more editorial player rows */
+.prow{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--border-2);background:var(--surface);transition:background .12s;}
+.prow:hover{background:var(--surface-2);}
+.pnum{font-family:'DM Mono',monospace;font-size:.58rem;color:var(--border);width:18px;text-align:right;flex-shrink:0;}
+.pname{font-size:.84rem;font-weight:600;color:var(--text);letter-spacing:-.01em;}
+.pdetail{font-size:.6rem;color:var(--muted);margin-top:0;}
+.odds{font-family:'DM Mono',monospace;font-size:.66rem;font-weight:500;padding:2px 7px;border-radius:4px;white-space:nowrap;flex-shrink:0;}
+.of{background:rgba(27,79,138,.08);color:var(--navy-light);border:1px solid rgba(27,79,138,.15);}
+.om{background:var(--surface-2);color:var(--text-2);border:1px solid var(--border);}
+.ol{background:transparent;color:var(--muted);border:1px solid var(--border);}
+[data-theme="dark"] .of{background:rgba(27,79,138,.25);color:#7AAEE0;border-color:rgba(27,79,138,.4);}
+[data-theme="dark"] .om{background:rgba(255,255,255,.05);color:rgba(255,255,255,.5);border-color:rgba(255,255,255,.08);}
+[data-theme="dark"] .ol{color:rgba(255,255,255,.25);border-color:rgba(255,255,255,.07);}
+.pick-btn{width:28px;height:28px;border-radius:4px;border:1.5px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:.75rem;cursor:pointer;flex-shrink:0;color:var(--muted);transition:all .15s;font-weight:700;}
+.pick-btn:hover{border-color:var(--navy);color:var(--navy);background:var(--surface-2);}
+.pick-btn.done{background:var(--navy);border-color:var(--navy);color:var(--gold);cursor:default;border-radius:4px;}
+
+/* Draft board refinements */
+.brow{display:flex;align-items:center;gap:8px;padding:6px 16px;border-bottom:1px solid var(--border-2);}
+.bpname{font-size:.78rem;font-weight:600;color:var(--navy);width:74px;flex-shrink:0;letter-spacing:-.01em;}
+[data-theme="dark"] .bpname{color:rgba(255,255,255,.75);}
+.bgolfer{font-size:.78rem;font-weight:500;color:var(--text);}
+.bround{padding:4px 16px 3px;font-size:.54rem;font-weight:700;color:rgba(184,169,106,.8);text-transform:uppercase;letter-spacing:.16em;background:var(--surface-2);border-bottom:1px solid var(--border);border-top:1px solid var(--border);}
+
+/* Chip refinements */
+.chip{flex-shrink:0;padding:4px 11px;border:1px solid var(--border);border-radius:4px;font-family:'DM Sans',sans-serif;font-size:.61rem;font-weight:600;color:var(--muted);background:var(--bg);cursor:pointer;transition:all .15s;white-space:nowrap;letter-spacing:.03em;}
+.chip.active{background:var(--navy);border-color:var(--navy);color:var(--gold);}
+
+/* Tier label */
+.tier-lbl{padding:6px 14px 4px;font-size:.55rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.16em;border-bottom:1px solid var(--border);background:var(--surface-2);position:sticky;top:0;z-index:10;}
+
+/* Search */
+.search-inner{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 12px;}
+.search-inp{flex:1;border:none;background:none;font-family:'DM Sans',sans-serif;font-size:.86rem;color:var(--text);outline:none;}
+
+/* Status bar */
+.ds-clock{font-family:'Cormorant Garamond',serif;font-size:.92rem;font-weight:600;color:white;display:flex;align-items:center;gap:7px;}
+
 </style>
 </head>
 <body>
 
 <div class="hdr">
   <div class="hdr-seal">
-    <span class="hdr-seal-pga">PGA</span>
+    <span class="hdr-seal-pga">USO</span>
     <div class="hdr-seal-line"></div>
     <span class="hdr-seal-year">2026</span>
   </div>
   <div class="hdr-text">
     <div class="hdr-name">True Oregonian Majors Pool</div>
-    <div class="hdr-tourn" id="t-name">Draft Board</div>
+    <div class="hdr-tourn" id="t-name">2026 US Open · Shinnecock Hills</div>
   </div>
   <div class="hdr-actions">
     <div class="desktop-nav">
-      <a href="index.html">Leaderboard</a>
-      <a href="draft.html" class="active">Draft</a>
+      <a href="usopen-index.html">Leaderboard</a>
+      <a href="usopen-draft.html" class="active">Draft</a>
       <a href="setup.html">Setup</a>
     </div>
     <button class="hdr-btn" onclick="toggleDark()" id="dark-btn" title="Toggle dark mode">
@@ -196,7 +256,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 
 <div id="load-msg" class="load-msg">Loading draft...</div>
 <div id="no-tourn" style="display:none;text-align:center;padding:60px 24px;color:var(--muted);font-size:.88rem">
-  No tournament found. <a href="setup.html" style="color:var(--gold)">Go to Setup →</a>
+  No US Open tournament set up yet. <a href="setup.html" style="color:var(--gold)">Go to Setup →</a>
 </div>
 
 <div class="draft-wrap" id="draft-wrap" style="display:none">
@@ -216,6 +276,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
       <div class="chip" onclick="setFilter('value',this)">Value</div>
       <div class="chip" onclick="setFilter('longshots',this)">Longshots</div>
       <div class="chip" onclick="setFilter('available',this)">Available</div>
+      <div class="chip" onclick="setFilter('queued',this)">&#9825; Queue</div>
+    </div>
+    <div class="queue-bar" id="queue-bar">
+      <div class="queue-bar-inner">
+        <span class="queue-label">Queue</span>
+        <div class="queue-scroll" id="queue-scroll">
+          <span class="queue-empty" id="queue-empty">Tap ♡ to queue players</span>
+        </div>
+      </div>
     </div>
     <div class="player-scroll" id="player-list"></div>
   </div>
@@ -233,11 +302,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 
 <!-- Bottom nav -->
 <nav class="bottom-nav">
-  <a class="bn-item" href="index.html">
+  <a class="bn-item" href="usopen-index.html">
     <svg class="bn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
     <span class="bn-lbl">Leaderboard</span>
   </a>
-  <a class="bn-item active" href="draft.html">
+  <a class="bn-item active" href="usopen-draft.html">
     <svg class="bn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
     <span class="bn-lbl">Draft</span>
   </a>
@@ -280,113 +349,92 @@ function mTab(tab,btn){
 const db=window.supabase.createClient(CONFIG.supabaseUrl,CONFIG.supabaseKey);
 
 const FIELD=[
-  // Favorites
-  {name:'Scottie Scheffler',      country:'🇺🇸',odds:'+480',   tier:'favorites'},
-  {name:'Rory McIlroy',           country:'🇬🇧',odds:'+850',   tier:'favorites'},
-  {name:'Cameron Young',          country:'🇺🇸',odds:'+1200',  tier:'favorites'},
-  {name:'Jon Rahm',               country:'🇪🇸',odds:'+1500',  tier:'favorites'},
-  {name:'Xander Schauffele',      country:'🇺🇸',odds:'+1600',  tier:'favorites'},
-  {name:'Ludvig Åberg',           country:'🇸🇪',odds:'+1800',  tier:'favorites'},
+  // Favorites — DraftKings live odds June 15 2026
+  {name:'Scottie Scheffler',          country:'🇺🇸', odds:'+460',   tier:'favorites'},
+  {name:'Rory McIlroy',               country:'🇬🇧', odds:'+950',   tier:'favorites'},
+  {name:'Jon Rahm',                   country:'🇪🇸', odds:'+1025',  tier:'favorites'},
+  {name:'Xander Schauffele',          country:'🇺🇸', odds:'+1850',  tier:'favorites'},
+  {name:'Cameron Young',              country:'🇺🇸', odds:'+2000',  tier:'favorites'},
+  {name:'Matt Fitzpatrick',           country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+2150',  tier:'favorites'},
   // Contenders
-  {name:'Bryson DeChambeau',      country:'🇺🇸',odds:'+2000',  tier:'contenders'},
-  {name:'Tommy Fleetwood',        country:'🇬🇧',odds:'+2500',  tier:'contenders'},
-  {name:'Collin Morikawa',        country:'🇺🇸',odds:'+2800',  tier:'contenders'},
-  {name:'Viktor Hovland',         country:'🇳🇴',odds:'+3000',  tier:'contenders'},
-  {name:'Patrick Cantlay',        country:'🇺🇸',odds:'+3500',  tier:'contenders'},
-  {name:'Russell Henley',         country:'🇺🇸',odds:'+3500',  tier:'contenders'},
-  {name:'Hideki Matsuyama',       country:'🇯🇵',odds:'+4000',  tier:'contenders'},
-  {name:'Matt Fitzpatrick',       country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',odds:'+4500',  tier:'contenders'},
-  {name:'Brooks Koepka',          country:'🇺🇸',odds:'+5000',  tier:'contenders'},
-  {name:'Jacob Bridgeman',        country:'🇺🇸',odds:'+5000',  tier:'contenders'},
-  {name:'Dustin Johnson',         country:'🇺🇸',odds:'+5000',  tier:'contenders'},
-  {name:'Sam Burns',              country:'🇺🇸',odds:'+5500',  tier:'contenders'},
-  {name:'Joaquin Niemann',        country:'🇨🇱',odds:'+5500',  tier:'contenders'},
+  {name:'Tommy Fleetwood',            country:'🇬🇧', odds:'+2500',  tier:'contenders'},
+  {name:'Ludvig Åberg',               country:'🇸🇪', odds:'+2600',  tier:'contenders'},
+  {name:'Bryson DeChambeau',          country:'🇺🇸', odds:'+2700',  tier:'contenders'},
+  {name:'Brooks Koepka',              country:'🇺🇸', odds:'+3300',  tier:'contenders'},
+  {name:'Collin Morikawa',            country:'🇺🇸', odds:'+3500',  tier:'contenders'},
+  {name:'Wyndham Clark',              country:'🇺🇸', odds:'+3700',  tier:'contenders'},
+  {name:'Russell Henley',             country:'🇺🇸', odds:'+3700',  tier:'contenders'},
+  {name:'Sam Burns',                  country:'🇺🇸', odds:'+3800',  tier:'contenders'},
+  {name:'Si Woo Kim',                 country:'🇰🇷', odds:'+3900',  tier:'contenders'},
+  {name:'Chris Gotterup',             country:'🇺🇸', odds:'+4400',  tier:'contenders'},
+  {name:'Justin Thomas',              country:'🇺🇸', odds:'+4400',  tier:'contenders'},
+  {name:'Tyrrell Hatton',             country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+4600',  tier:'contenders'},
+  {name:'Patrick Cantlay',            country:'🇺🇸', odds:'+4600',  tier:'contenders'},
   // Value
-  {name:'Justin Thomas',          country:'🇺🇸',odds:'+5500',  tier:'value'},
-  {name:'Justin Rose',            country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',odds:'+5500',  tier:'value'},
-  {name:'Shane Lowry',            country:'🇮🇪',odds:'+6000',  tier:'value'},
-  {name:'Min Woo Lee',            country:'🇦🇺',odds:'+6000',  tier:'value'},
-  {name:'J.J. Spaun',             country:'🇺🇸',odds:'+10000', tier:'value'},
-  {name:'Akshay Bhatia',          country:'🇺🇸',odds:'+6500',  tier:'value'},
-  {name:'Robert MacIntyre',       country:'🏴󠁧󠁢󠁳󠁣󠁴󠁿',odds:'+7000',  tier:'value'},
-  {name:'Sungjae Im',             country:'🇰🇷',odds:'+8000',  tier:'value'},
-  {name:'Si Woo Kim',             country:'🇰🇷',odds:'+9000',  tier:'value'},
-  {name:'Patrick Reed',           country:'🇺🇸',odds:'+9000',  tier:'value'},
-  {name:'Cameron Smith',          country:'🇦🇺',odds:'+10000', tier:'value'},
-  {name:'Tyrrell Hatton',         country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',odds:'+10000', tier:'value'},
-  {name:'Wyndham Clark',          country:'🇺🇸',odds:'+10000', tier:'value'},
-  {name:'Jason Day',              country:'🇦🇺',odds:'+10000', tier:'value'},
-  {name:'Rickie Fowler',          country:'🇺🇸',odds:'+12000', tier:'value'},
-  {name:'Harris English',         country:'🇺🇸',odds:'+12000', tier:'value'},
-  {name:'Billy Horschel',         country:'🇺🇸',odds:'+12000', tier:'value'},
-  {name:'Maverick McNealy',       country:'🇺🇸',odds:'+13000', tier:'value'},
-  {name:'Lucas Glover',           country:'🇺🇸',odds:'+13000', tier:'value'},
-  {name:'Brian Harman',           country:'🇺🇸',odds:'+14000', tier:'value'},
-  {name:'Thomas Detry',           country:'🇧🇪',odds:'+14000', tier:'value'},
-  {name:'Christiaan Bezuidenhout',country:'🇿🇦',odds:'+15000', tier:'value'},
-  {name:'Taylor Pendrith',        country:'🇨🇦',odds:'+15000', tier:'value'},
-  {name:'Stephan Jaeger',         country:'🇩🇪',odds:'+15000', tier:'value'},
-  {name:'Daniel Berger',          country:'🇺🇸',odds:'+15000', tier:'value'},
-  {name:'Kurt Kitayama',          country:'🇺🇸',odds:'+15000', tier:'value'},
-  {name:'Tom McKibbin',           country:'🇬🇧',odds:'+18000', tier:'value'},
-  {name:'Alex Noren',             country:'🇸🇪',odds:'+18000', tier:'value'},
-  {name:'Nico Echavarria',        country:'🇨🇴',odds:'+18000', tier:'value'},
-  {name:'Keith Mitchell',         country:'🇺🇸',odds:'+20000', tier:'value'},
-  {name:'Ryan Fox',               country:'🇳🇿',odds:'+20000', tier:'value'},
-  {name:'Emiliano Grillo',        country:'🇦🇷',odds:'+20000', tier:'value'},
-  {name:'Max Greyserman',         country:'🇺🇸',odds:'+20000', tier:'value'},
+  {name:'Patrick Reed',               country:'🇺🇸', odds:'+4900',  tier:'value'},
+  {name:'Justin Rose',                country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+5200',  tier:'value'},
+  {name:'Viktor Hovland',             country:'🇳🇴', odds:'+5400',  tier:'value'},
+  {name:'J.J. Spaun',                 country:'🇺🇸', odds:'+6100',  tier:'value'},
+  {name:'Hideki Matsuyama',           country:'🇯🇵', odds:'+6500',  tier:'value'},
+  {name:'Robert MacIntyre',           country:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', odds:'+6600',  tier:'value'},
+  {name:'Jordan Spieth',              country:'🇺🇸', odds:'+6900',  tier:'value'},
+  {name:'Joaquin Niemann',            country:'🇨🇱', odds:'+6900',  tier:'value'},
+  {name:'Min Woo Lee',                country:'🇦🇺', odds:'+7200',  tier:'value'},
+  {name:'Ben Griffin',                country:'🇺🇸', odds:'+7400',  tier:'value'},
+  {name:'Maverick McNealy',           country:'🇺🇸', odds:'+7600',  tier:'value'},
+  {name:'Adam Scott',                 country:'🇦🇺', odds:'+7600',  tier:'value'},
+  {name:'Kurt Kitayama',              country:'🇺🇸', odds:'+7800',  tier:'value'},
+  {name:'Shane Lowry',                country:'🇮🇪', odds:'+8200',  tier:'value'},
+  {name:'Harris English',             country:'🇺🇸', odds:'+8800',  tier:'value'},
+  {name:'Jake Knapp',                 country:'🇺🇸', odds:'+9400',  tier:'value'},
+  {name:'David Puig',                 country:'🇪🇸', odds:'+9600',  tier:'value'},
+  {name:'Bud Cauley',                 country:'🇺🇸', odds:'+9600',  tier:'value'},
+  {name:'Alex Smalley',               country:'🇺🇸', odds:'+10500', tier:'value'},
+  {name:'Sepp Straka',                country:'🇦🇹', odds:'+10500', tier:'value'},
+  {name:'Aaron Rai',                  country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+11000', tier:'value'},
+  {name:'Alex Fitzpatrick',           country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+11000', tier:'value'},
+  {name:'Rickie Fowler',              country:'🇺🇸', odds:'+11000', tier:'value'},
+  {name:'Ryan Gerard',                country:'🇺🇸', odds:'+11000', tier:'value'},
+  {name:'Kristoffer Reitan',          country:'🇳🇴', odds:'+11500', tier:'value'},
+  {name:'J.T. Poston',                country:'🇺🇸', odds:'+11500', tier:'value'},
+  {name:'Jacob Bridgeman',            country:'🇺🇸', odds:'+13000', tier:'value'},
+  {name:'Jason Day',                  country:'🇦🇺', odds:'+13000', tier:'value'},
+  {name:'Nicolai Højgaard',           country:'🇩🇰', odds:'+13000', tier:'value'},
+  {name:'Akshay Bhatia',              country:'🇺🇸', odds:'+14000', tier:'value'},
+  {name:'Keegan Bradley',             country:'🇺🇸', odds:'+14500', tier:'value'},
+  {name:'Keith Mitchell',             country:'🇺🇸', odds:'+14500', tier:'value'},
+  {name:'Alex Noren',                 country:'🇸🇪', odds:'+15000', tier:'value'},
+  {name:'Cameron Smith',              country:'🇦🇺', odds:'+15000', tier:'value'},
   // Longshots
-  {name:'Sepp Straka',            country:'🇦🇹',odds:'+20000', tier:'longshots'},
-  {name:'Adam Scott',             country:'🇦🇺',odds:'+20000', tier:'longshots'},
-  {name:'Chris Gotterup',         country:'🇺🇸',odds:'+20000', tier:'longshots'},
-  {name:'Nicolai Højgaard',       country:'🇩🇰',odds:'+22000', tier:'longshots'},
-  {name:'Rasmus Højgaard',        country:'🇩🇰',odds:'+22000', tier:'longshots'},
-  {name:'Jake Knapp',             country:'🇺🇸',odds:'+22000', tier:'longshots'},
-  {name:'Max Homa',               country:'🇺🇸',odds:'+25000', tier:'longshots'},
-  {name:'Corey Conners',          country:'🇨🇦',odds:'+25000', tier:'longshots'},
-  {name:'J.T. Poston',            country:'🇺🇸',odds:'+27000', tier:'longshots'},
-  {name:'Jordan Spieth',          country:'🇺🇸',odds:'+28000', tier:'longshots'},
-  {name:'Keegan Bradley',         country:'🇺🇸',odds:'+30000', tier:'longshots'},
-  {name:'Davis Riley',            country:'🇺🇸',odds:'+35000', tier:'longshots'},
-  {name:'Pierceson Coody',        country:'🇺🇸',odds:'+35000', tier:'longshots'},
-  {name:'Andrew Novak',           country:'🇺🇸',odds:'+35000', tier:'longshots'},
-  {name:'Aldrich Potgieter',      country:'🇿🇦',odds:'+35000', tier:'longshots'},
-  {name:'Ben Griffin',            country:'🇺🇸',odds:'+40000', tier:'longshots'},
-  {name:'Alex Fitzpatrick',       country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',odds:'+40000', tier:'longshots'},
-  {name:'Ryo Hisatsune',          country:'🇯🇵',odds:'+40000', tier:'longshots'},
-  {name:'Harry Hall',             country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',odds:'+40000', tier:'longshots'},
-  {name:'Tom Kim',                country:'🇰🇷',odds:'+40000', tier:'longshots'},
-  {name:'Joe Highsmith',          country:'🇺🇸',odds:'+50000', tier:'longshots'},
-  {name:'Denny McCarthy',         country:'🇺🇸',odds:'+50000', tier:'longshots'},
-  {name:'Matt McCarty',           country:'🇺🇸',odds:'+50000', tier:'longshots'},
-  {name:'Chris Kirk',             country:'🇺🇸',odds:'+50000', tier:'longshots'},
-  {name:'David Puig',             country:'🇪🇸',odds:'+50000', tier:'longshots'},
-  {name:'Garrick Higgo',          country:'🇿🇦',odds:'+50000', tier:'longshots'},
-  {name:'Patrick Rodgers',        country:'🇺🇸',odds:'+60000', tier:'longshots'},
-  {name:'Adam Schenk',            country:'🇺🇸',odds:'+60000', tier:'longshots'},
-  {name:'Aaron Rai',              country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',odds:'+60000', tier:'longshots'},
-  {name:'Haotong Li',             country:'🇨🇳',odds:'+60000', tier:'longshots'},
-  {name:'Rico Hoey',              country:'🇺🇸',odds:'+60000', tier:'longshots'},
-  {name:'Jared Jones',            country:'🇺🇸',odds:'+60000', tier:'longshots'},
-  {name:'Alex Smalley',           country:'🇺🇸',odds:'+80000', tier:'longshots'},
-  {name:'Ben Kern',               country:'🇺🇸',odds:'+80000', tier:'longshots'},
-  {name:'Brandt Snedeker',        country:'🇺🇸',odds:'+80000', tier:'longshots'},
-  {name:'Bud Cauley',             country:'🇺🇸',odds:'+80000', tier:'longshots'},
-  {name:'Casey Jarvis',           country:'🇿🇦',odds:'+80000', tier:'longshots'},
-  {name:'Daniel Brown',           country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',odds:'+80000', tier:'longshots'},
-  {name:'Kazuki Higa',            country:'🇯🇵',odds:'+80000', tier:'longshots'},
-  {name:'Kota Kaneko',            country:'🇯🇵',odds:'+80000', tier:'longshots'},
-  {name:'Luke Donald',            country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿',odds:'+100000',tier:'longshots'},
-  {name:'Martin Kaymer',          country:'🇩🇪',odds:'+100000',tier:'longshots'},
-  {name:'Pádraig Harrington',     country:'🇮🇪',odds:'+100000',tier:'longshots'},
-  {name:'Stewart Cink',           country:'🇺🇸',odds:'+100000',tier:'longshots'},
-  {name:'Jason Dufner',           country:'🇺🇸',odds:'+100000',tier:'longshots'},
-  {name:'Shaun Micheel',          country:'🇺🇸',odds:'+200000',tier:'longshots'},
-  {name:'Michael Block',          country:'🇺🇸',odds:'+200000',tier:'longshots'},
-  {name:'Y.E. Yang',              country:'🇰🇷',odds:'+500000',tier:'longshots'},
+  {name:'Dustin Johnson',             country:'🇺🇸', odds:'+17000', tier:'longshots'},
+  {name:'Sahith Theegala',            country:'🇺🇸', odds:'+17000', tier:'longshots'},
+  {name:'Harry Hall',                 country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+18000', tier:'longshots'},
+  {name:'Tom Kim',                    country:'🇰🇷', odds:'+18500', tier:'longshots'},
+  {name:'Pierceson Coody',            country:'🇺🇸', odds:'+19000', tier:'longshots'},
+  {name:'Ryan Fox',                   country:'🇳🇿', odds:'+19000', tier:'longshots'},
+  {name:'Daniel Berger',              country:'🇺🇸', odds:'+21000', tier:'longshots'},
+  {name:'Corey Conners',              country:'🇨🇦', odds:'+21000', tier:'longshots'},
+  {name:'Sungjae Im',                 country:'🇰🇷', odds:'+21000', tier:'longshots'},
+  {name:'Brian Harman',               country:'🇺🇸', odds:'+23000', tier:'longshots'},
+  {name:'Nick Taylor',                country:'🇨🇦', odds:'+23000', tier:'longshots'},
+  {name:'Ryo Hisatsune',              country:'🇯🇵', odds:'+24000', tier:'longshots'},
+  {name:'Max Greyserman',             country:'🇺🇸', odds:'+30000', tier:'longshots'},
+  {name:'Andrew Novak',               country:'🇺🇸', odds:'+31000', tier:'longshots'},
+  {name:'Patrick Rodgers',            country:'🇺🇸', odds:'+45000', tier:'longshots'},
+  {name:'Nico Echavarria',            country:'🇨🇴', odds:'+48000', tier:'longshots'},
+  {name:'Chris Kirk',                 country:'🇺🇸', odds:'+50000', tier:'longshots'},
+  {name:'Matti Schmid',               country:'🇩🇪', odds:'+50000', tier:'longshots'},
+  {name:'Emiliano Grillo',            country:'🇦🇷', odds:'+52500', tier:'longshots'},
+  {name:'Billy Horschel',             country:'🇺🇸', odds:'+57500', tier:'longshots'},
+  {name:'Padraig Harrington',         country:'🇮🇪', odds:'+160000',tier:'longshots'},
+  {name:'Gary Woodland',              country:'🇺🇸', odds:'+11500', tier:'longshots'},
+  {name:'Sudarshan Yellamaraju',      country:'🇮🇳', odds:'+13500', tier:'longshots'},
+  {name:'Benjamin James',             country:'🇺🇸', odds:'+33000', tier:'longshots'},
 ];
 
 let tournament,participants=[],picks=[],draftOrder=[],idx=0,activeFilter='all',q='';
+let queue=new Set(); // favorited player names
+
 
 document.addEventListener('DOMContentLoaded',async()=>{
   try{
@@ -416,7 +464,7 @@ function buildOrder(){
 
 function updateIdx(){idx=Math.min(picks.length,draftOrder.length-1);if(picks.length>=draftOrder.length)idx=draftOrder.length;}
 
-function render(){updateIdx();renderStatus();renderList();renderBoard();}
+function render(){updateIdx();renderStatus();renderList();renderBoard();renderQueue();}
 
 function renderStatus(){
   const tot=draftOrder.length,made=picks.length;
@@ -438,6 +486,7 @@ function renderList(){
     const players=FIELD.filter(p=>{
       if(activeFilter!=='all'&&activeFilter!=='available'&&p.tier!==activeFilter)return false;
       if(activeFilter==='available'&&taken.has(nm(p.name)))return false;
+      if(activeFilter==='queued'&&!queue.has(p.name))return false;
       if(q&&!p.name.toLowerCase().includes(q))return false;
       if(activeFilter==='all'||activeFilter==='available')return p.tier===tier.id;
       return p.tier===activeFilter;
@@ -447,7 +496,8 @@ function renderList(){
     players.forEach(player=>{
       num++;const isTaken=taken.has(nm(player.name));
       const row=document.createElement('div');row.className='prow'+(isTaken?' taken':'');
-      row.innerHTML=`<span class="pnum">${num}</span><div class="pinfo"><div class="pname">${player.name}</div><div class="pdetail">${player.country}</div></div><span class="odds ${oc(player.tier)}">${player.odds}</span><button class="pick-btn ${isTaken?'done':''}" onclick="doPick('${player.name}',this)" ${isTaken?'disabled':''}>${isTaken?'✓':'+'}</button>`;
+      const isQ=queue.has(player.name);
+      row.innerHTML=`<span class="pnum">${num}</span><div class="pinfo"><div class="pname">${player.name}</div><div class="pdetail">${player.country}</div></div><span class="odds ${oc(player.tier)}">${player.odds}</span><button class="fav-btn ${isQ&&!isTaken?'queued':''}" onclick="toggleQueue('${player.name}','${player.odds}',this)" title="${isQ?'Remove from queue':'Add to queue'}"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button><button class="pick-btn ${isTaken?'done':''}" onclick="doPick('${player.name}',this)" ${isTaken?'disabled':''}>${isTaken?'✓':'+'}</button>`;
       list.appendChild(row);
     });
   });
@@ -458,7 +508,7 @@ function renderBoard(){
   const scroll=document.getElementById('board-scroll');
   const done=picks.length>=draftOrder.length;
   document.getElementById('board-meta').textContent=`${picks.length} / ${draftOrder.length}`;
-  if(done){scroll.innerHTML=`<div class="done-msg"><h3>Draft Complete</h3><p>All ${draftOrder.length} picks made.</p><a href="index.html" class="btn-pri">View Leaderboard →</a></div>`;return;}
+  if(done){scroll.innerHTML=`<div class="done-msg"><h3>Draft Complete</h3><p>All ${draftOrder.length} picks made.</p><a href="usopen-index.html" class="btn-pri">View Leaderboard →</a></div>`;return;}
   let html='',lr=0;
   draftOrder.forEach((slot,i)=>{
     if(slot.round!==lr){html+=`<div class="bround">Round ${slot.round}</div>`;lr=slot.round;}
@@ -488,6 +538,54 @@ async function undoPick(id){
     const{data}=await db.from('picks').select('*,participants(name)').eq('tournament_id',tournament.id).order('pick_number',{ascending:true});
     picks=data||[];render();
   }catch(e){alert('Error: '+e.message);}
+}
+
+function toggleQueue(name, odds, btn){
+  if(queue.has(name)){
+    queue.delete(name);
+    btn.classList.remove('queued');
+  } else {
+    queue.add(name);
+    btn.classList.add('queued');
+  }
+  renderQueue();
+  // Update the queue filter chip count
+  const qchip=document.querySelector('.chip[onclick*="queued"]');
+  if(qchip) qchip.textContent=queue.size>0?`♡ Queue (${queue.size})`:'♡ Queue';
+}
+
+function renderQueue(){
+  const scroll=document.getElementById('queue-scroll');
+  const empty=document.getElementById('queue-empty');
+  const taken=new Set(picks.map(p=>nm(p.golfer_name)));
+  if(queue.size===0){
+    empty.style.display='';
+    // Remove all pills
+    scroll.querySelectorAll('.queue-pill').forEach(p=>p.remove());
+    return;
+  }
+  empty.style.display='none';
+  // Rebuild pills
+  scroll.querySelectorAll('.queue-pill').forEach(p=>p.remove());
+  queue.forEach(name=>{
+    const isTaken=taken.has(nm(name));
+    const player=FIELD.find(f=>nm(f.name)===nm(name));
+    const odds=player?.odds||'';
+    const pill=document.createElement('div');
+    pill.className='queue-pill'+(isTaken?' taken':'');
+    pill.innerHTML=`<span class="queue-pill-name">${name}</span><span class="queue-pill-odds">${odds}</span><button class="queue-pill-remove" onclick="removeFromQueue('${name}',this.closest('.queue-pill'))">✕</button>`;
+    scroll.appendChild(pill);
+  });
+}
+
+function removeFromQueue(name, pill){
+  queue.delete(name);
+  pill.remove();
+  // Update fav button in player list
+  renderList();
+  const qchip=document.querySelector('.chip[onclick*="queued"]');
+  if(qchip) qchip.textContent=queue.size>0?`♡ Queue (${queue.size})`:'♡ Queue';
+  if(queue.size===0) document.getElementById('queue-empty').style.display='';
 }
 
 function setFilter(id,el){activeFilter=id;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');renderList();}
