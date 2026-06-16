@@ -1,27 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
-<head> <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
+<head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>True Oregonian Majors Pool</title>
+<title>True Oregonian Majors Pool — US Open</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
 :root{
-  --navy:#0B1F3A;--navy-mid:#152D4E;--navy-light:#1E3D68;--gold:#C5A561;
-  --bg:#FAF8F3;--surface:#fff;--surface-2:#F5F1E8;
-  --border:#E2DDD4;--border-2:#EDE9E0;
-  --text:#1A2332;--text-2:#4A5568;--muted:#7A8A9A;
-  --under:#0A5C2A;--under-bg:#F0FAF4;
-  --r:4px;--rlg:10px;
+  --navy:#002B5C;--navy-mid:#003875;--navy-light:#1A5090;
+  --gold:#BF0D3E;
+  --bg:#F5F7FA;--surface:#FFFFFF;--surface-2:#EEF1F6;
+  --border:#D8DDE6;--border-2:#E5E8EF;
+  --text:#0A1628;--text-2:#3D5275;--muted:#7A8CA8;
+  --under:#006B3C;--under-bg:#EBF5F0;
+  --r:4px;--rlg:8px;
 }
 [data-theme="dark"]{
-  --bg:#0D1829;--surface:#111E30;--surface-2:#152D4E;
+  --bg:#001428;--surface:#001E3C;--surface-2:#002350;
   --border:rgba(255,255,255,.08);--border-2:rgba(255,255,255,.05);
-  --text:rgba(255,255,255,.9);--text-2:rgba(255,255,255,.55);--muted:rgba(255,255,255,.3);
+  --text:rgba(255,255,255,.92);--text-2:rgba(255,255,255,.55);--muted:rgba(255,255,255,.3);
   --under:#4ABA76;--under-bg:rgba(74,186,118,.08);
 }
 html,body{height:100%;}
@@ -210,6 +212,37 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 .bn-item.active .bn-icon{color:var(--gold);}
 .bn-item.active .bn-lbl{color:var(--gold);}
 
+/* ── UI POLISH ── */
+/* More editorial team cards */
+.tcard{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+.tcard-hdr{background:var(--navy);padding:9px 13px;display:flex;align-items:center;gap:9px;}
+.trank{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700;color:rgba(255,255,255,.1);min-width:24px;line-height:1;flex-shrink:0;}
+.tname{font-family:'Cormorant Garamond',serif;font-size:.92rem;font-weight:600;color:white;letter-spacing:-.01em;}
+.twin{font-family:'DM Mono',monospace;font-size:.56rem;color:rgba(184,169,106,.55);margin-top:1px;}
+.grow{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border-2);}
+.gname{flex:1;font-size:.76rem;font-weight:500;color:var(--text);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gpos{font-family:'DM Mono',monospace;font-size:.58rem;width:22px;flex-shrink:0;color:var(--muted);text-align:center;}
+.gscore{font-family:'DM Mono',monospace;font-size:.64rem;font-weight:700;min-width:22px;text-align:right;}
+.gearn{font-family:'DM Mono',monospace;font-size:.57rem;min-width:42px;text-align:right;}
+
+/* Standings table */
+.stable th{padding:6px 10px;font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);border-bottom:2px solid var(--border);}
+.stable td{padding:7px 10px;border-bottom:1px solid var(--border-2);font-size:.8rem;}
+.srk{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:700;}
+.spill{font-size:.59rem;color:var(--muted);background:var(--surface-2);border-radius:3px;padding:1px 5px;border:1px solid var(--border);}
+
+/* Field table */
+.ftable th{padding:6px 8px;font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);border-bottom:2px solid var(--border);}
+.ftable td{padding:5px 8px;border-bottom:1px solid var(--border-2);font-size:.79rem;}
+.otag{display:inline-block;background:var(--under-bg);color:var(--under);border-radius:3px;padding:1px 5px;font-size:.6rem;font-weight:600;margin:1px;border:1px solid rgba(10,92,42,.12);}
+
+/* Page tabs — more refined */
+.ptab{flex-shrink:0;padding:10px 16px;background:none;border:none;font-family:'DM Sans',sans-serif;font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:color .15s;}
+
+/* Stat bar — tighter */
+.si-lbl{font-size:.48rem;color:rgba(255,255,255,.24);font-weight:700;text-transform:uppercase;letter-spacing:.14em;margin-bottom:2px;}
+.si-val{font-family:'Cormorant Garamond',serif;font-size:.88rem;font-weight:600;color:rgba(255,255,255,.88);line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
 /* ── HISTORY TAB ── */
 .hist-tournament{margin-bottom:18px;background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;}
 .hist-tourn-hdr{padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none;}
@@ -244,6 +277,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 .hist-no-data{text-align:center;padding:40px 20px;color:var(--muted);font-size:.85rem;}
 .hist-no-data p{margin-bottom:8px;}
 
+
 </style>
 </head>
 <body>
@@ -251,18 +285,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 <!-- Header -->
 <div class="hdr">
   <div class="hdr-seal">
-    <span class="hdr-seal-pga">PGA</span>
+    <span class="hdr-seal-pga">USO</span>
     <div class="hdr-seal-line"></div>
     <span class="hdr-seal-year">2026</span>
   </div>
   <div class="hdr-text">
     <div class="hdr-name">True Oregonian Majors Pool</div>
-    <div class="hdr-tourn" id="t-name">Loading...</div>
+    <div class="hdr-tourn" id="t-name">2026 US Open · Shinnecock Hills</div>
   </div>
   <div class="hdr-actions">
     <div class="desktop-nav">
-      <a href="index.html" class="active">Leaderboard</a>
-      <a href="draft.html">Draft</a>
+      <a href="usopen-index.html" class="active">Leaderboard</a>
+      <a href="usopen-draft.html">Draft</a>
       <a href="setup.html">Setup</a>
     </div>
     <button class="hdr-btn" onclick="toggleDark()" id="dark-btn" title="Toggle dark mode">
@@ -287,7 +321,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 
 <!-- Weather -->
 <div class="wx" id="wx" style="display:none">
-  <span class="wx-venue">Aronimink GC · Newtown Square, PA</span>
+  <span class="wx-venue">Shinnecock Hills GC · Southampton, NY</span>
   <div class="wx-sep"></div>
   <span class="wx-temp" id="wx-temp">—</span>
   <span class="wx-cond" id="wx-cond">—</span>
@@ -311,7 +345,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
   <div id="loading" style="text-align:center;padding:60px;color:var(--muted)">Loading...</div>
   <div id="no-tournament" class="empty-state" style="display:none">
     <h2>No Active Tournament</h2>
-    <p>Set up a tournament to get started.</p>
+    <p>Set up the 2026 US Open at Shinnecock Hills to get started.</p>
     <a href="setup.html" class="btn-pri">Set Up Tournament</a>
   </div>
   <div id="app" style="display:none">
@@ -327,11 +361,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 
 <!-- Bottom nav (mobile only) -->
 <nav class="bottom-nav">
-  <a class="bn-item active" href="index.html">
+  <a class="bn-item active" href="usopen-index.html">
     <svg class="bn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
     <span class="bn-lbl">Leaderboard</span>
   </a>
-  <a class="bn-item" href="draft.html">
+  <a class="bn-item" href="usopen-draft.html">
     <svg class="bn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
     <span class="bn-lbl">Draft</span>
   </a>
@@ -464,24 +498,21 @@ function ps(s){
 }
 function gr(st,i){const s=st[i];if(!s)return null;const v=parseInt(s.displayValue||s.value||s,10);return isNaN(v)?null:v;}
 
-// Official 2026 PGA Championship payouts — $20.5M purse, 82 players made cut
+// 2026 US Open payouts — based on $21.5M purse (2025 structure, 60 players make cut)
+// Exact amounts to be confirmed; using 2025 distribution
 const PGA_PAYOUTS={
-  1:3690000,2:2214000,3:1394000,4:984000,5:820000,
-  6:727600,7:681050,8:636400,9:593700,10:553000,
-  11:514160,12:477300,13:442370,14:409390,15:378340,
-  16:349240,17:322080,18:296850,19:273570,20:252230,
-  21:232830,22:215370,23:199840,24:187230,25:175110,
-  26:163460,27:152310,28:141640,29:131450,30:121750,
-  31:113990,32:107200,33:101380,34:96530,35:92650,
-  36:88960,37:85370,38:81880,39:78480,40:75180,
-  41:71980,42:68880,43:65870,44:62960,45:60150,
-  46:57430,47:54810,48:52290,49:49860,50:47540,
-  51:45300,52:43170,53:41130,54:39190,55:37350,
-  56:35600,57:33950,58:32600,59:31430,60:30460,
-  61:29690,62:29120,63:28640,64:28180,65:27740,
-  66:27310,67:26890,68:26480,69:26080,70:25690,
-  71:25310,72:24940,73:24580,74:24230,75:23900,
-  76:23900,77:23900,78:23900,79:23900,80:23900,81:23900,82:23900,
+  1:3870000,2:2322000,3:1462500,4:1032500,5:861000,
+  6:764500,7:715650,8:668250,9:623100,10:580500,
+  11:539690,12:500865,13:464489,14:429658,15:397471,
+  16:367228,17:338632,18:311684,19:286780,20:264842,
+  21:244551,22:226207,23:209810,24:196591,25:183873,
+  26:171584,27:159832,28:148560,29:137826,30:127807,
+  31:119690,32:112560,33:106449,34:101254,35:97288,
+  36:93429,37:89676,38:85922,39:82384,40:78953,
+  41:75630,42:72306,43:69089,44:66086,45:63191,
+  46:60295,47:57507,48:54826,49:52253,50:49894,
+  51:47535,52:45283,53:43138,54:41100,55:39170,
+  56:37348,57:35633,58:34230,59:32988,60:31962,
 };
 
 function calcPay(sc){
@@ -592,7 +623,7 @@ function renderTeams(ts){
       :'';
     const ph=t.gs.length
       ?t.gs.map(({pick,g,w})=>{const pos=g?.pos||'—';const pn=parseInt((pos||'').replace(/\D/g,''),10);const pc=pn===1?'p1':pn<=5?'pt5':pn<=10?'pt10':'';return`<div class="grow"><span class="gpos ${pc}">${pos}</span><span class="gname">${pick.golfer_name}</span><span class="gscore ${sc(g?.score)}">${g?fs(g.score):'—'}</span><span class="gearn ${w>0?'':'n'}">${w>0?fsh(w):'—'}</span></div>`;}).join('')
-      :'<p style="color:var(--muted);font-size:.75rem;padding:5px 0">No picks yet — <a href="draft.html" style="color:var(--gold)">draft</a></p>';
+      :'<p style="color:var(--muted);font-size:.75rem;padding:5px 0">No picks yet — <a href="usopen-draft.html" style="color:var(--gold)">draft</a></p>';
     const c=document.createElement('div');c.className='tcard';
     c.innerHTML=`<div class="tcard-hdr"><span class="trank ${rc}">${rank+1}</span><div class="tinfo"><div class="tname">${t.p.name}</div><div class="twin">${fm(t.tw)}</div></div>${tsHtml}</div><div class="tpicks">${ph}</div>`;
     grid.appendChild(c);
@@ -624,7 +655,7 @@ function renderField(s){
     const p=participants.find(p=>p.id===pk.participant_id);
     if(p)om[key].push(p.name);
   });
-  if(!s.length){tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted);font-size:.85rem">Live scoring begins Thursday, May 14 · Check back when the tournament starts</td></tr>`;return;}
+  if(!s.length){tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted);font-size:.85rem">Live scoring begins Thursday, June 18 · Check back when the tournament starts</td></tr>`;return;}
   s.forEach(g=>{
     const owners=om[nm(g.name)]||[];const win=payouts[g.name]||0;
     const tr=document.createElement('tr');
@@ -640,7 +671,7 @@ function renderTT(s){
   const grps={};
   s.forEach(g=>{const t=g.teeTime||'TBD';if(!grps[t])grps[t]=[];grps[t].push(g);});
   const keys=Object.keys(grps);
-  if(!keys.length||keys.length===1&&grps['TBD']){body.innerHTML='<div class="empty-msg">Tee times will appear here once pairings are announced — typically Wednesday evening before the tournament.</div>';return;}
+  if(!keys.length||keys.length===1&&grps['TBD']){body.innerHTML='<div class="empty-msg">Tee times will appear here once pairings are announced — typically Wednesday, June 17, before the tournament.</div>';return;}
   const sorted=keys.sort((a,b)=>{if(a==='TBD')return 1;if(b==='TBD')return-1;return a.localeCompare(b);});
   body.innerHTML=sorted.map(time=>`
     <div class="ttgroup">
@@ -666,7 +697,7 @@ function showTab(id,btn){
 
 async function fetchWx(){
   try{
-    const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=39.9601&longitude=-75.3552&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,precipitation_probability_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/New_York&forecast_days=5');
+    const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=40.8940&longitude=-72.4400&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,precipitation_probability_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/New_York&forecast_days=5');
     const d=await r.json();
     const cm={0:'Sunny',1:'Clear',2:'Partly Cloudy',3:'Overcast',51:'Drizzle',61:'Rain',63:'Rain',71:'Snow',80:'Showers',95:'Storms'};
     const wind=Math.round(d.current.wind_speed_10m);
@@ -681,7 +712,6 @@ async function fetchWx(){
     document.getElementById('wx').style.display='flex';
   }catch(e){}
 }
-
 // ── HISTORY ───────────────────────────────────────────────────
 async function loadHistory(){
   const body = document.getElementById('history-body');
@@ -808,6 +838,7 @@ async function saveResults() {
     btn.disabled = false; btn.textContent = 'Save Final Results';
   }
 }
+
 
 </script>
 </body>
