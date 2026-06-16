@@ -209,6 +209,41 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 .bn-lbl{font-size:.52rem;font-weight:600;color:rgba(255,255,255,.28);letter-spacing:.08em;text-transform:uppercase;transition:color .15s;}
 .bn-item.active .bn-icon{color:var(--gold);}
 .bn-item.active .bn-lbl{color:var(--gold);}
+
+/* ── HISTORY TAB ── */
+.hist-tournament{margin-bottom:18px;background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+.hist-tourn-hdr{padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none;}
+.hist-tourn-hdr:hover{background:var(--surface-2);}
+.hist-tourn-name{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:600;color:var(--text);flex:1;}
+.hist-tourn-meta{font-size:.6rem;color:var(--muted);font-family:'DM Mono',monospace;}
+.hist-tourn-chevron{color:var(--muted);font-size:.7rem;transition:transform .2s;flex-shrink:0;}
+.hist-tournament.open .hist-tourn-chevron{transform:rotate(180deg);}
+.hist-tourn-body{display:none;border-top:1px solid var(--border);}
+.hist-tournament.open .hist-tourn-body{display:block;}
+.hist-row{display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid var(--border-2);}
+.hist-row:last-child{border-bottom:none;}
+.hist-row:hover{background:var(--surface-2);}
+.hist-rank{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:700;color:var(--muted);width:24px;flex-shrink:0;}
+.hist-rank.r1{color:var(--gold);}
+.hist-rank.r2{color:rgba(197,165,97,.45);}
+.hist-rank.r3{color:rgba(197,165,97,.25);}
+.hist-name{flex:1;font-size:.84rem;font-weight:600;color:var(--text);}
+.hist-picks{display:flex;flex-wrap:wrap;gap:3px;margin-top:2px;}
+.hist-pick{font-size:.6rem;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:3px;padding:1px 5px;}
+.hist-pick.top10{color:var(--under);border-color:rgba(10,92,42,.2);background:var(--under-bg);}
+[data-theme="dark"] .hist-pick.top10{color:#4ABA76;border-color:rgba(74,186,118,.25);background:rgba(74,186,118,.08);}
+.hist-score{font-family:'DM Mono',monospace;font-size:.72rem;font-weight:700;color:var(--muted);min-width:28px;text-align:right;}
+.hist-score.under{color:var(--under);}
+[data-theme="dark"] .hist-score.under{color:#4ABA76;}
+.hist-winnings{font-family:'DM Mono',monospace;font-size:.72rem;font-weight:600;color:#2D7A4F;min-width:64px;text-align:right;}
+[data-theme="dark"] .hist-winnings{color:#4ABA76;}
+.hist-winnings.zero{color:var(--border);font-weight:400;}
+.hist-save-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:var(--navy);color:var(--gold);border:1px solid rgba(197,165,97,.2);border-radius:4px;font-family:'DM Sans',sans-serif;font-size:.65rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;margin:12px 16px;}
+.hist-save-btn:hover{background:var(--navy-mid);}
+.hist-save-btn:disabled{opacity:.4;cursor:default;}
+.hist-no-data{text-align:center;padding:40px 20px;color:var(--muted);font-size:.85rem;}
+.hist-no-data p{margin-bottom:8px;}
+
 </style>
 </head>
 <body>
@@ -268,6 +303,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
   <button class="ptab" onclick="showTab('standings',this)">Standings</button>
   <button class="ptab" onclick="showTab('field',this)">Field</button>
   <button class="ptab" onclick="showTab('teetimes',this)">Tee Times</button>
+    <button class="ptab" onclick="showTab('history',this)">History</button>
 </div>
 
 <!-- Scroll area -->
@@ -283,6 +319,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
     <div class="tc" id="tc-standings"><table class="stable"><thead><tr><th style="width:36px"></th><th>Player</th><th class="r">Score</th><th class="r">Winnings</th><th class="r">Best</th></tr></thead><tbody id="standings-tbody"></tbody></table></div>
     <div class="tc" id="tc-field"><table class="ftable"><thead><tr><th>Pos</th><th>Player</th><th class="c">Score</th><th class="c">Today</th><th class="c">Thru</th><th class="c">R1</th><th class="c">R2</th><th class="c">R3</th><th class="c">R4</th><th class="c">$</th><th>Pool</th></tr></thead><tbody id="field-tbody"></tbody></table></div>
     <div class="tc" id="tc-teetimes"><div id="teetimes-body"></div></div>
+    <div class="tc" id="tc-history">
+      <div id="history-body"><div class="empty-msg">Loading history...</div></div>
+    </div>
   </div>
 </div>
 
@@ -616,11 +655,13 @@ function renderTT(s){
 
 function ftt(t){if(!t||t==='TBD')return'TBD';try{const d=new Date(t);return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});}catch(e){return t;}}
 
+let historyLoaded = false;
 function showTab(id,btn){
   document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.tc').forEach(t=>t.classList.remove('active'));
   document.getElementById('tc-'+id).classList.add('active');
   btn.classList.add('active');
+  if(id==='history' && !historyLoaded){ historyLoaded=true; loadHistory(); }
 }
 
 async function fetchWx(){
@@ -640,6 +681,134 @@ async function fetchWx(){
     document.getElementById('wx').style.display='flex';
   }catch(e){}
 }
+
+// ── HISTORY ───────────────────────────────────────────────────
+async function loadHistory(){
+  const body = document.getElementById('history-body');
+  try {
+    // Get all tournaments ordered by date
+    const { data: allTournaments } = await db.from('tournaments')
+      .select('*').order('created_at', { ascending: false });
+    if (!allTournaments?.length) {
+      body.innerHTML = '<div class="hist-no-data"><p>No tournament history yet.</p></div>';
+      return;
+    }
+
+    let html = '';
+    for (const t of allTournaments) {
+      // Get saved results for this tournament
+      const { data: results } = await db.from('results')
+        .select('*').eq('tournament_id', t.id);
+      // Get participants + picks for this tournament
+      const { data: parts } = await db.from('participants')
+        .select('*').eq('tournament_id', t.id).order('draft_order', { ascending: true });
+      const { data: tpicks } = await db.from('picks')
+        .select('*').eq('tournament_id', t.id);
+
+      const hasResults = results?.length > 0;
+      const isCurrent = tournament?.id === t.id;
+
+      // Build team standings from results
+      let teams = [];
+      if (parts?.length) {
+        const resultMap = {};
+        (results || []).forEach(r => { resultMap[nm(r.golfer_name)] = r; });
+
+        teams = parts.map(p => {
+          const myPicks = (tpicks || []).filter(pk => pk.participant_id === p.id);
+          let totalWin = 0, totalScore = 0, hasScore = false;
+          const golfers = myPicks.map(pk => {
+            const r = resultMap[nm(pk.golfer_name)];
+            totalWin += r?.winnings || 0;
+            if (r?.score !== null && r?.score !== undefined) {
+              totalScore += r.score; hasScore = true;
+            }
+            return { name: pk.golfer_name, pos: r?.position || '—', score: r?.score ?? null, win: r?.winnings || 0 };
+          });
+          return { p, golfers, totalWin, totalScore: hasScore ? totalScore : null };
+        }).sort((a, b) => b.totalWin - a.totalWin);
+      }
+
+      const isoDate = t.created_at ? new Date(t.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '';
+      const purseStr = t.purse ? '$' + (t.purse / 1e6).toFixed(1) + 'M purse' : '';
+
+      html += `<div class="hist-tournament${isCurrent ? '' : ' open'}" id="hist-${t.id}">
+        <div class="hist-tourn-hdr" onclick="toggleHist('${t.id}')">
+          <div style="flex:1">
+            <div class="hist-tourn-name">${t.name}</div>
+            <div class="hist-tourn-meta">${[isoDate, purseStr].filter(Boolean).join(' · ')}</div>
+          </div>
+          ${isCurrent ? '<span style="font-size:.58rem;color:var(--gold);font-weight:700;letter-spacing:.08em;text-transform:uppercase">Live</span>' : ''}
+          <span class="hist-tourn-chevron">▼</span>
+        </div>
+        <div class="hist-tourn-body">
+          ${!hasResults && !isCurrent ? `
+            <div class="hist-no-data">
+              <p>No saved results for this tournament.</p>
+              <p style="font-size:.75rem">Use the Save Results button on the active tournament to archive scores.</p>
+            </div>` : ''}
+          ${isCurrent && !hasResults ? `
+            <div style="padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface-2)">
+              <p style="font-size:.78rem;color:var(--muted);margin-bottom:8px">Save final results to preserve scores after the tournament ends.</p>
+              <button class="hist-save-btn" id="save-results-btn" onclick="saveResults()">
+                Save Final Results
+              </button>
+            </div>` : ''}
+          ${teams.map((t, rank) => {
+            const rc = rank === 0 ? 'r1' : rank === 1 ? 'r2' : rank === 2 ? 'r3' : '';
+            const picks = t.golfers.map(g => {
+              const posNum = parseInt((g.pos || '').replace(/\D/g, ''), 10);
+              const isTop = posNum > 0 && posNum <= 10;
+              return `<span class="hist-pick${isTop ? ' top10' : ''}">${g.name}${g.pos && g.pos !== '—' ? ' · ' + g.pos : ''}</span>`;
+            }).join('');
+            return `<div class="hist-row">
+              <span class="hist-rank ${rc}">${rank + 1}</span>
+              <div style="flex:1;min-width:0">
+                <div class="hist-name">${t.p.name}</div>
+                <div class="hist-picks">${picks}</div>
+              </div>
+              <span class="hist-score${t.totalScore !== null && t.totalScore < 0 ? ' under' : ''}">${t.totalScore !== null ? fs(t.totalScore) : '—'}</span>
+              <span class="hist-winnings${t.totalWin > 0 ? '' : ' zero'}">${t.totalWin > 0 ? fm(t.totalWin) : '—'}</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }
+
+    body.innerHTML = html || '<div class="hist-no-data"><p>No tournament history yet.</p></div>';
+  } catch(e) {
+    body.innerHTML = `<div class="hist-no-data"><p>Error loading history: ${e.message}</p></div>`;
+  }
+}
+
+function toggleHist(id) {
+  document.getElementById('hist-' + id)?.classList.toggle('open');
+}
+
+async function saveResults() {
+  if (!tournament || !scores.length) { alert('No live scores to save.'); return; }
+  const btn = document.getElementById('save-results-btn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  try {
+    const rows = scores.map(g => ({
+      tournament_id: tournament.id,
+      golfer_name: g.name,
+      position: g.pos || '—',
+      score: g.score,
+      r1: g.r1, r2: g.r2, r3: g.r3, r4: g.r4,
+      winnings: payouts[g.name] || 0,
+    }));
+    // Upsert so re-saving updates existing
+    const { error } = await db.from('results').upsert(rows, { onConflict: 'tournament_id,golfer_name' });
+    if (error) throw error;
+    btn.textContent = '✓ Saved!';
+    setTimeout(() => loadHistory(), 800);
+  } catch(e) {
+    alert('Error saving: ' + e.message);
+    btn.disabled = false; btn.textContent = 'Save Final Results';
+  }
+}
+
 </script>
 </body>
 </html>
