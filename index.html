@@ -455,12 +455,12 @@ let tournament,participants=[],picks=[],scores=[],payouts={};
 document.addEventListener('DOMContentLoaded',async()=>{
   fetchWx();
   try{
-    const{data,error}=await db.from('tournaments').select('*').order('created_at',{ascending:false}).limit(1).single();
-    if(error||!data){
+    const{data,error}=await db.from('tournaments').select('*').order('created_at',{ascending:false}).limit(1);
+    if(error||!data||!data.length){
       document.getElementById('loading').style.display='none';
       document.getElementById('no-tournament').style.display='block';return;
     }
-    tournament=data;
+    tournament=data[0];
     document.getElementById('t-name').textContent=tournament.name;
     document.title=tournament.name+' — TOMP';
     const{data:pp}=await db.from('participants').select('*').eq('tournament_id',tournament.id).order('draft_order',{ascending:true});
@@ -473,7 +473,10 @@ document.addEventListener('DOMContentLoaded',async()=>{
     document.getElementById('statbar').style.display='flex';
     document.getElementById('wx').style.display='flex';
     document.getElementById('ptabs').style.display='flex';
-  }catch(e){document.getElementById('loading').textContent='Error: '+e.message;}
+  }catch(e){
+    console.error('Boot error:', e);
+    document.getElementById('loading').textContent='Error: '+e.message;
+  }
   setInterval(refresh,120000);
 });
 
@@ -896,12 +899,59 @@ async function saveResults() {
 
 
 
-// ── DRAFT GRADES ─────────────────────────────────────────────
-const PICK_ANALYSIS = {"Scottie Scheffler": {"grade": "B", "tags": ["elite", "risk"], "note": "World #1 but iron play down from peak. Needs Shinnecock to suit him. Grand Slam pressure adds intrigue."}, "Rory McIlroy": {"grade": "B+", "tags": ["elite", "fit"], "note": "Called Shinnecock "the best championship course in the country." Links-style suits his ball flight."}, "Jon Rahm": {"grade": "A-", "tags": ["elite", "hot"], "note": "T2 at PGA Champ, 2 LIV wins this year. Proven major pedigree — 2021 US Open champion."}, "Tommy Fleetwood": {"grade": "A+", "tags": ["elite", "fit", "hot"], "note": "Expert pick to win. Shot 63 at Shinnecock in 2018, course-record Sunday. 3 top-11s in last 4 starts. Best course fit in the field."}, "Xander Schauffele": {"grade": "B+", "tags": ["elite"], "note": "Defending Olympic champ, major winner. Steady but hasn"t shown Shinnecock-specific form."}, "Matt Fitzpatrick": {"grade": "A", "tags": ["elite", "fit"], "note": "3 wins in 2026, only player with that. 2022 US Open champion. Currently the in-form pick of the favorites."}, "Cameron Young": {"grade": "A-", "tags": ["fit", "hot"], "note": "New York native playing home crowd at Shinnecock. 2 wins, 6 top-10s in 2026. Ryder Cup hero at Bethpage."}, "Ludvig Åberg": {"grade": "B", "tags": ["elite"], "note": "World class talent but US Open experience limited. Shinnecock demands patience — still learning major championship management."}, "Bryson DeChambeau": {"grade": "C+", "tags": ["risk"], "note": "Power game is a liability at Shinnecock where accuracy trumps distance. Defending champion at Pinehurst-style rough."}, "Brooks Koepka": {"grade": "C+", "tags": ["fit", "risk"], "note": "Won here in 2018 but dealing with hand/ulnar nerve injury. Great Shinnecock history, real health uncertainty."}, "Russell Henley": {"grade": "A-", "tags": ["fit", "value"], "note": "#2 driving accuracy in the field — ideal for Shinnecock. Top 14 in last 3 US Opens. Recent win at Bay Hill."}, "Collin Morikawa": {"grade": "B+", "tags": ["fit"], "note": "Elite iron play is THE skill this week. Ball-striking metrics match Shinnecock demands precisely."}, "Patrick Cantlay": {"grade": "B", "tags": ["fit"], "note": "Accurate, methodical game suits the patient approach Shinnecock requires. Lacks recent major momentum."}, "Patrick Reed": {"grade": "C", "tags": ["value"], "note": "Scrappy style can work on difficult setups. Limited upside at these odds but course fits his grind-it-out approach."}, "Si Woo Kim": {"grade": "B", "tags": ["value", "boom"], "note": "Expert analysis flags him as a potential final-pairing dark horse. Inconsistent but dangerous at difficult setups."}, "Sam Burns": {"grade": "B", "tags": ["fit", "value"], "note": "Named alongside Henley/Spaun/Reed as Shinnecock-style player. Drives it straight, attacks with irons."}, "Justin Thomas": {"grade": "B-", "tags": ["fit"], "note": "Past US Open form is patchy but his iron game is tailor-made for Shinnecock. A bounce-back feels overdue."}, "Justin Rose": {"grade": "B", "tags": ["fit"], "note": "2013 US Open champion. Links-style suits his creative shot-making. Age a factor but Shinnecock experience is gold."}, "Viktor Hovland": {"grade": "C+", "tags": ["risk"], "note": "Slipped to world #33, only 1 top-10 in 11 starts. Hits fairways but struggles to find greens — a problem at Shinnecock."}, "Min Woo Lee": {"grade": "B+", "tags": ["fit", "value"], "note": "Specifically cited by analysts as ideal for Shinnecock — uses long irons/fairway woods off tees, keeps it in play."}, "Jake Knapp": {"grade": "C", "tags": ["boom"], "note": "Big hitter but Shinnecock neutralizes distance. Low floor, low ceiling here."}, "Robert MacIntyre": {"grade": "B+", "tags": ["fit", "value"], "note": "Links specialist from Scotland, comfortable in wind. The Tartan Army contingent will make him feel at home. Great value play."}, "Harris English": {"grade": "C+", "tags": ["value"], "note": "Solid iron player but limited major pedigree. Named as a sleeper type but needs to prove it at this level."}, "J.J. Spaun": {"grade": "B", "tags": ["fit", "hot"], "note": "Defending US Open champion (2025 Oakmont). Named as Shinnecock-style player alongside Burns and Henley."}, "Hideki Matsuyama": {"grade": "B-", "tags": ["risk"], "note": "World class iron player but US Open historically hasn"t been his event. Putter remains the question mark."}, "Jordan Spieth": {"grade": "B-", "tags": ["boom"], "note": "Long injury layoff. Has the creativity for Shinnecock but form is a major unknown."}, "Chris Gotterup": {"grade": "B-", "tags": ["fit"], "note": "Local connection, played at Shinnecock area. Featured in Fried Egg US Open preview as someone to watch."}, "Akshay Bhatia": {"grade": "C+", "tags": ["boom"], "note": "Young talent, high upside but unproven in majors. Volatile — could be great, could miss the cut."}, "Aaron Rai": {"grade": "B+", "tags": ["hot", "value"], "note": "Just won the PGA Championship at Aronimink. Momentum is real. Underrated at +11000 given recent form."}, "Rickie Fowler": {"grade": "C", "tags": ["risk"], "note": "Missed back-to-back cuts heading in. Shinnecock demands consistency Fowler hasn"t shown lately."}, "Cameron Smith": {"grade": "C+", "tags": ["value"], "note": "Phenomenal putter but Shinnecock minimizes the putting advantage. Iron play and accuracy will matter more."}, "Tyrrell Hatton": {"grade": "B", "tags": ["fit"], "note": "Grew up playing links golf in England. Wind and firm conditions feel like home. Underrated course fit."}, "Wyndham Clark": {"grade": "B-", "tags": ["boom"], "note": "2023 US Open champion (LA Country Club). History of major performances on tough setups."}, "Sepp Straka": {"grade": "C", "tags": ["value"], "note": "Steady but limited US Open history. Longer shot whose value is speculative."}, "Corey Conners": {"grade": "B-", "tags": ["fit"], "note": "Elite driver accuracy suits Shinnecock. Doesn"t generate buzz but profile fits the course."}};
+// ── DRAFT GRADES ────────────────────────────────────────────
+// Grade each pick: Shinnecock = iron play, accuracy, patience
+// Source: DraftKings odds, Fried Egg / GolfPass expert analysis, course fit
+const PICK_GRADES = {
+  // A tier — elite fit or dominant form
+  'Tommy Fleetwood':      'A+', // Shot 63 at Shinnecock 2018, best course fit, in form
+  'Matt Fitzpatrick':     'A',  // 3 wins 2026, 2022 US Open champ, iron specialist
+  'Russell Henley':       'A-', // #2 driving accuracy, top 14 last 3 US Opens, recent win
+  'Jon Rahm':             'A-', // T2 PGA Champ, 2021 US Open champ, elite iron play
+  'Cameron Young':        'A-', // NY native, 2 wins, home crowd, 6 top-10s
+  'Robert MacIntyre':     'A-', // Links specialist, wind expert, great value
+  'Min Woo Lee':          'A-', // Specifically cited for Shinnecock — long irons off tees
+  // B tier — strong but some question marks
+  'Rory McIlroy':         'B+', // Links game fits, called it "best course in country"
+  'Xander Schauffele':    'B+', // Major winner, steady — lacks Shinnecock-specific form
+  'Collin Morikawa':      'B+', // Elite iron play is the skill this week
+  'Aaron Rai':            'B+', // Just won PGA Champ, real momentum at +11000 value
+  'Sam Burns':            'B',  // Named as Shinnecock-type player, straight hitter
+  'Si Woo Kim':           'B',  // Dark horse potential, can grind difficult setups
+  'Scottie Scheffler':    'B',  // World #1 but iron play down from peak levels
+  'Patrick Cantlay':      'B',  // Accurate and methodical, lacks major momentum
+  'Tyrrell Hatton':       'B',  // Links background, grew up in wind
+  'Justin Rose':          'B',  // 2013 US Open champ, creative shot-making
+  'J.J. Spaun':           'B',  // Defending US Open champ, named as Shinnecock type
+  'Justin Thomas':        'B-', // Patchy US Open form, iron game fits when on
+  'Sepp Straka':          'B-', // Accurate but limited US Open pedigree
+  'Corey Conners':        'B-', // Elite accuracy fits course, flies under radar
+  'Ludvig Åberg':         'B-', // World class talent, still learning major management
+  // C tier — misfit or significant risk
+  'Brooks Koepka':        'C+', // Won here 2018, real hand injury uncertainty
+  'Viktor Hovland':       'C+', // Slipped to #33, only 1 top-10 in 11 starts
+  'Bryson DeChambeau':    'C+', // Power game is liability at accuracy-first Shinnecock
+  'Harris English':       'C+', // Solid irons, limited major pedigree
+  'Cameron Smith':        'C+', // Great putter but Shinnecock minimizes putting edge
+  'Hideki Matsuyama':     'C',  // US Open historically not his event, putter the issue
+  'Patrick Reed':         'C',  // Grind style can work but limited ceiling here
+  'Wyndham Clark':        'C',  // 2023 US Open winner but form is inconsistent
+  'Rickie Fowler':        'C',  // Missed back-to-back cuts heading in
+  'Akshay Bhatia':        'C',  // High upside, volatile — unproven in majors
+  'Jake Knapp':           'C',  // Power game neutralized at Shinnecock
+  'Jordan Spieth':        'C-', // Long injury layoff, major unknown
+};
 
 const GRADE_ORDER = ['A+','A','A-','B+','B','B-','C+','C','C-','D'];
 
-function gradeClass(g){ return 'grade-' + g.replace('+','plus').replace('-','minus'); }
+function gradeColor(g){
+  if(g.startsWith('A')) return '#4ABA76';
+  if(g.startsWith('B')) return '#5BAEE0';
+  if(g.startsWith('C')) return '#D4C44A';
+  return '#E07A5F';
+}
+
+function gradeScore(g){ return GRADE_ORDER.indexOf(g); }
 
 function renderGrades(){
   const body = document.getElementById('grades-body');
@@ -910,85 +960,50 @@ function renderGrades(){
     return;
   }
 
-  // Build score map for current scores
-  const{map,lastMap} = scores.length ? buildScoreMap(scores) : {map:{},lastMap:{}};
-
   // Grade each team
   const graded = participants.map(p => {
     const myPicks = picks.filter(pk => pk.participant_id === p.id);
-    if(!myPicks.length) return {p, myPicks, teamGrade:'—', gradeScore:0};
-
-    // Average grade score
+    if(!myPicks.length) return {p, myPicks, teamGrade:'—', avgScore:99};
     let total = 0, count = 0;
     myPicks.forEach(pk => {
-      const a = PICK_ANALYSIS[pk.golfer_name];
-      if(a){ total += GRADE_ORDER.indexOf(a.grade); count++; }
+      const g = PICK_GRADES[pk.golfer_name];
+      if(g){ total += gradeScore(g); count++; }
     });
     const avgIdx = count ? Math.round(total/count) : 5;
-    const teamGrade = count ? GRADE_ORDER[Math.min(avgIdx, GRADE_ORDER.length-1)] : '—';
-    return {p, myPicks, teamGrade, gradeScore: count ? total/count : 99};
-  }).sort((a,b) => a.gradeScore - b.gradeScore);
+    const teamGrade = GRADE_ORDER[Math.min(avgIdx, GRADE_ORDER.length-1)];
+    return {p, myPicks, teamGrade, avgScore: count ? total/count : 99};
+  }).sort((a,b) => a.avgScore - b.avgScore);
 
-  const tagHtml = (tags) => (tags||[]).map(t => {
-    const labels = {elite:'Elite Talent',fit:'Course Fit',hot:'In Form',value:'Value Pick',risk:'Risk',boom:'Boom/Bust'};
-    return `<span class="grade-pick-tag tag-${t}">${labels[t]||t}</span>`;
-  }).join('');
-
-  let html = `
-    <div class="grades-intro">
-      <div class="grades-intro-title">2026 US Open Draft Grades</div>
-      <div class="grades-intro-sub">Based on current DraftKings odds · Shinnecock Hills course fit · recent form · expert analysis</div>
-    </div>
-    <div class="grades-course-card">
-      <div class="grades-course-title">Shinnecock Hills — What Wins This Week</div>
-      <div class="grades-factors">
-        <div class="grades-factor"><div class="grades-factor-lbl">Key Skill</div><div class="grades-factor-val pos">Iron Play</div></div>
-        <div class="grades-factor"><div class="grades-factor-lbl">Off Tee</div><div class="grades-factor-val pos">Accuracy &gt; Distance</div></div>
-        <div class="grades-factor"><div class="grades-factor-lbl">Conditions</div><div class="grades-factor-val">Wind · Firm · Fast</div></div>
-        <div class="grades-factor"><div class="grades-factor-lbl">Approach</div><div class="grades-factor-val">Patience · Placement</div></div>
-        <div class="grades-factor"><div class="grades-factor-lbl">Putting</div><div class="grades-factor-val neg">Less Important</div></div>
-        <div class="grades-factor"><div class="grades-factor-lbl">Expert Pick</div><div class="grades-factor-val pos">Fleetwood +2500</div></div>
-      </div>
+  let out = `
+    <div style="padding:14px 0 12px;border-bottom:1px solid var(--border);margin-bottom:18px;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;color:var(--text)">2026 US Open Draft Grades</div>
+      <div style="font-size:.68rem;color:var(--muted);margin-top:4px">Based on Shinnecock Hills course fit · current DraftKings odds · expert analysis</div>
     </div>`;
 
   graded.forEach((team, rank) => {
-    const rc = rank===0?'r1':rank===1?'r2':rank===2?'r3':'';
-    const gc = gradeClass(team.teamGrade);
-    const picksHtml = team.myPicks.map(pk => {
-      const a = PICK_ANALYSIS[pk.golfer_name];
-      const g = scores.length ? findGolfer(pk.golfer_name, map, lastMap) : null;
-      const scoreStr = g ? `<span style="font-family:'DM Mono',monospace;font-size:.65rem;color:${g.score<0?'var(--under)':'var(--muted)'}"> ${fs(g.score)}</span>` : '';
-      if(!a) return `<div class="grade-pick-row"><span class="grade-pick-name">${pk.golfer_name}${scoreStr}</span><div class="grade-pick-analysis"><div class="grade-pick-note">No analysis available.</div></div></div>`;
-      return `<div class="grade-pick-row">
-        <span class="grade-pick-name">${pk.golfer_name}${scoreStr}</span>
-        <div class="grade-pick-analysis">
-          <div>${tagHtml(a.tags)}</div>
-          <div class="grade-pick-note">${a.note}</div>
-        </div>
+    const gc = gradeColor(team.teamGrade);
+    const rankColor = rank===0?'var(--gold)':rank===1?'rgba(191,13,62,.55)':rank===2?'rgba(191,13,62,.3)':'rgba(255,255,255,.12)';
+    const pickList = team.myPicks.map(pk => {
+      const pg = PICK_GRADES[pk.golfer_name];
+      const pgColor = pg ? gradeColor(pg) : 'var(--muted)';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border-2);">
+        <span style="font-size:.8rem;font-weight:500;color:var(--text)">${pk.golfer_name}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:.72rem;font-weight:700;color:${pgColor}">${pg||'—'}</span>
       </div>`;
     }).join('');
 
-    const summary = team.teamGrade === '—' ? 'No picks entered yet.' :
-      team.gradeScore <= 1.5 ? 'Elite draft — stacked with course fits and in-form players.' :
-      team.gradeScore <= 3 ? 'Strong draft with good course fit and upside.' :
-      team.gradeScore <= 4.5 ? 'Solid draft. A few boom/bust picks add variance.' :
-      'High-variance draft — needs some picks to catch fire.';
-
-    html += `<div class="grade-card">
-      <div class="grade-card-hdr">
-        <span class="grade-rank ${rc}">${rank+1}</span>
-        <span class="grade-name">${team.p.name}</span>
-        <div class="grade-badge ${gc}">${team.teamGrade}</div>
+    out += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:10px;">
+      <div style="background:var(--navy);padding:10px 14px;display:flex;align-items:center;gap:10px;">
+        <span style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700;color:${rankColor};min-width:22px">${rank+1}</span>
+        <span style="font-family:'Cormorant Garamond',serif;font-size:.95rem;font-weight:600;color:white;flex:1">${team.p.name}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:.85rem;font-weight:700;color:${gc};background:rgba(255,255,255,.06);border:1px solid ${gc}33;border-radius:4px;padding:3px 10px">${team.teamGrade}</span>
       </div>
-      <div class="grade-body">
-        <div class="grade-picks">${picksHtml||'<div class="grade-pick-note">No picks yet.</div>'}</div>
-        <div class="grade-summary"><div class="grade-summary-txt">${summary}</div></div>
-      </div>
+      <div style="padding:6px 14px 10px">${pickList||'<p style="font-size:.78rem;color:var(--muted);padding:8px 0">No picks yet.</p>'}</div>
     </div>`;
   });
 
-  html += `<div class="grades-disclaimer">Grades reflect pre-tournament analysis based on course fit, current form and expert consensus. Shinnecock Hills rewards precision and patience — and has a long history of surprising the field.</div>`;
-  body.innerHTML = html;
+  out += `<div style="font-size:.6rem;color:var(--muted);text-align:center;padding:10px 0;line-height:1.5">Grades reflect course fit and form at Shinnecock Hills. A+ = elite fit · B = solid · C = risk or mismatch</div>`;
+  body.innerHTML = out;
 }
 
 </script>
