@@ -1,266 +1,1020 @@
 <!DOCTYPE html>
 <html lang="en">
-<head> <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
+<head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Setup — True Oregonian Majors Pool</title>
-<link rel="stylesheet" href="shared.css"/>
+<title>The Open Championship — TOMP</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js"></script>
-<script src="db.js"></script>
+<script>
+const CONFIG = {
+  supabaseUrl: 'https://tzcwlxarshsdaonwvwkz.supabase.co',
+  supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6Y3dseGFyc2hzZGFvbnd2d2t6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODU1MjAwNCwiZXhwIjoyMDk0MTI4MDA0fQ.bjhQWeMRUjG0fdnJ3PhBEtXBAdpw5ur736O2rrnj9SU',
+  picksPerPlayer: 4,
+  payoutPercents: {}
+};
+</script>
 <style>
-.setup-page { max-width: 680px; margin: 0 auto; padding: 32px 24px; }
-.page-title { font-family: 'Cormorant Garamond', serif; font-size: 1.9rem; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
-[data-theme="dark"] .page-title { color: var(--gold); }
-.page-sub { color: var(--muted); margin-bottom: 28px; font-size: .88rem; line-height: 1.5; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 
-.setup-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 18px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
-.setup-section-header { background: var(--navy); padding: 11px 20px; display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid rgba(197,165,97,.15); }
-.step-num { font-family: 'DM Mono', monospace; font-size: .65rem; color: var(--gold); letter-spacing: .06em; }
-.step-title { font-family: 'Cormorant Garamond', serif; font-size: .95rem; font-weight: 600; color: white; letter-spacing: .04em; }
-.section-body { padding: 20px; }
-
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-@media (max-width: 500px) { .form-row { grid-template-columns: 1fr; } }
-
-.form-group { margin-bottom: 14px; }
-.form-group:last-child { margin-bottom: 0; }
-.form-group label { display: block; font-size: .62rem; font-weight: 600; text-transform: uppercase; letter-spacing: .1em; color: var(--navy); margin-bottom: 6px; }
-[data-theme="dark"] .form-group label { color: rgba(255,255,255,.55); }
-.hint { font-size: .7rem; color: var(--muted); margin-bottom: 6px; font-weight: 400; text-transform: none; letter-spacing: 0; line-height: 1.4; }
-.form-group input {
-  width: 100%; padding: 10px 12px;
-  border: 1px solid var(--border); border-radius: var(--radius);
-  font-family: 'DM Sans', sans-serif; font-size: .9rem;
-  background: var(--bg); color: var(--text); transition: border-color .15s;
+:root{
+  --navy:#1B2B1A;--navy-mid:#243523;--navy-light:#3A5C38;
+  --gold:#C8A951;
+  --bg:#F8F6F0;--surface:#FFFFFF;--surface-2:#F2EDE0;
+  --border:#DDD5C0;--border-2:#E8E2D0;
+  --text:#1A1A0E;--text-2:#4A5040;--muted:#7A8070;
+  --under:#006B3C;--under-bg:#EBF5F0;
+  --r:4px;--rlg:8px;
 }
-.form-group input:focus { outline: none; border-color: var(--navy); }
-[data-theme="dark"] .form-group input:focus { border-color: var(--gold); }
-
-.participants-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-@media (max-width: 500px) { .participants-grid { grid-template-columns: 1fr 1fr; } }
-.p-input-row { display: flex; align-items: center; gap: 7px; }
-.p-num { font-family: 'DM Mono', monospace; width: 20px; text-align: center; font-weight: 500; color: var(--gold); font-size: .72rem; flex-shrink: 0; }
-.p-input-row input { flex: 1; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-family: 'DM Sans', sans-serif; font-size: .84rem; background: var(--bg); color: var(--text); }
-
-/* Current tournament banner */
-.current-banner {
-  background: var(--under-bg);
-  border: 1px solid rgba(10,92,42,.15);
-  border-radius: var(--radius-lg);
-  padding: 14px 18px;
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+[data-theme="dark"]{
+  --bg:#0E1A0D;--surface:#152414;--surface-2:#1C301A;
+  --border:rgba(255,255,255,.08);--border-2:rgba(255,255,255,.05);
+  --text:rgba(255,255,255,.92);--text-2:rgba(255,255,255,.55);--muted:rgba(255,255,255,.3);
+  --under:#4ABA76;--under-bg:rgba(74,186,118,.08);
 }
-[data-theme="dark"] .current-banner { background: rgba(74,186,118,.08); border-color: rgba(74,186,118,.15); }
-.current-banner strong { font-family: 'Cormorant Garamond', serif; font-size: 1.05rem; color: var(--navy); }
-[data-theme="dark"] .current-banner strong { color: var(--gold); }
-.current-banner .meta { font-size: .75rem; color: var(--muted); margin-top: 3px; }
-.status-pill { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
-.status-setup    { background: #fef3c7; color: #92400e; }
-.status-draft    { background: #dbeafe; color: #1e40af; }
-.status-active   { background: #d1fae5; color: #065f46; }
-.status-complete { background: #f3f4f6; color: #374151; }
+html,body{height:100%;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;}
 
-.btn-danger { background: none; border: 1px solid #e53935; color: #e53935; border-radius: var(--radius); padding: 8px 16px; font-family: 'DM Sans', sans-serif; font-size: .78rem; cursor: pointer; transition: all .15s; }
-.btn-danger:hover { background: #e53935; color: white; }
-
-.alert { padding: 12px 16px; border-radius: var(--radius); font-size: .88rem; margin-bottom: 20px; display: none; }
-.alert-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
-.alert-error   { background: #fde8e8; color: #c0392b; border: 1px solid #f5b7b7; }
-
-.actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
-
-@media (max-width: 640px) {
-  .setup-page { padding: 16px; }
-  .site-header { padding: 0 14px; }
+/* ── HEADER ── */
+.hdr{
+  background:var(--navy);
+  border-bottom:1px solid rgba(197,165,97,.2);
+  padding:10px 16px;
+  display:flex;align-items:center;gap:12px;
+  flex-shrink:0;
+  position:sticky;top:0;z-index:200;
 }
+.hdr-seal{
+  width:36px;height:36px;border:1.5px solid var(--gold);border-radius:50%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;
+}
+.hdr-seal-pga{font-family:'Cormorant Garamond',serif;font-size:.62rem;font-weight:700;color:var(--gold);letter-spacing:.1em;line-height:1;}
+.hdr-seal-line{width:14px;height:1px;background:rgba(197,165,97,.4);margin:1.5px 0;}
+.hdr-seal-year{font-family:'DM Mono',monospace;font-size:.38rem;color:rgba(197,165,97,.55);letter-spacing:.06em;}
+.hdr-text{flex:1;min-width:0;}
+.hdr-name{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:600;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.1;}
+.hdr-tourn{font-size:.58rem;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-top:2px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hdr-actions{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.hdr-btn{background:none;border:none;padding:6px;cursor:pointer;display:flex;align-items:center;color:rgba(255,255,255,.4);border-radius:var(--r);}
+.hdr-btn:hover{color:var(--gold);}
+
+/* Desktop nav — hidden on mobile */
+.desktop-nav{display:none;}
+@media(min-width:700px){
+  .desktop-nav{display:flex;align-items:stretch;margin-left:auto;}
+  .desktop-nav a{display:flex;align-items:center;padding:0 16px;color:rgba(255,255,255,.38);text-decoration:none;font-size:.68rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;border-bottom:2px solid transparent;transition:all .2s;}
+  .desktop-nav a:hover{color:rgba(255,255,255,.75);}
+  .desktop-nav a.active{color:var(--gold);border-bottom-color:var(--gold);}
+  .hdr{padding:0 24px;}
+  .hdr-seal{width:40px;height:40px;}
+  .hdr-seal-pga{font-size:.7rem;}
+  .hdr-seal-year{font-size:.46rem;}
+  .hdr-name{font-size:1.2rem;}
+  .hdr-tourn{font-size:.65rem;}
+  .hdr-text{padding:14px 0;}
+  .bottom-nav{display:none!important;}
+}
+
+/* ── TICKER ── */
+.ticker{background:#0A1624;border-bottom:1px solid rgba(197,165,97,.12);display:flex;align-items:center;height:32px;overflow:hidden;flex-shrink:0;}
+[data-theme="dark"] .ticker{background:rgba(0,0,0,.4);}
+.ticker-lbl{background:rgba(197,165,97,.1);border-right:1px solid rgba(197,165,97,.15);color:var(--gold);font-size:.55rem;font-weight:700;padding:0 12px;white-space:nowrap;letter-spacing:.14em;text-transform:uppercase;height:100%;display:flex;align-items:center;flex-shrink:0;}
+.ticker-scroll{overflow:hidden;flex:1;height:100%;}
+.ticker-track{display:flex;align-items:center;height:100%;white-space:nowrap;animation:tick 22s linear infinite;}
+.ticker-track:hover{animation-play-state:paused;}
+@keyframes tick{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.ti{display:inline-flex;align-items:center;gap:4px;padding:0 12px;border-right:1px solid rgba(255,255,255,.05);font-size:.68rem;}
+.ti-pos{font-family:'DM Mono',monospace;font-size:.58rem;color:rgba(197,165,97,.6);font-weight:600;}
+.ti-name{color:rgba(255,255,255,.72);font-weight:500;}
+.ti-name.pk{color:var(--gold);font-weight:700;}
+.ti-sc{font-family:'DM Mono',monospace;font-size:.64rem;font-weight:600;}
+.ti-sc.u{color:#4ABA76;}.ti-sc.e{color:rgba(255,255,255,.35);}.ti-sc.o{color:rgba(255,255,255,.4);}
+.ti-dot{color:rgba(197,165,97,.2);font-size:.42rem;padding:0 1px;}
+
+/* ── STAT BAR ── */
+.statbar{background:var(--navy-mid);border-bottom:1px solid rgba(197,165,97,.08);display:flex;height:50px;flex-shrink:0;}
+.si{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 14px;border-right:1px solid rgba(255,255,255,.05);}
+.si:last-child{border-right:none;}
+.si-lbl{font-size:.5rem;color:rgba(255,255,255,.26);font-weight:600;text-transform:uppercase;letter-spacing:.12em;margin-bottom:2px;}
+.si-val{font-family:'Cormorant Garamond',serif;font-size:.9rem;font-weight:600;color:rgba(255,255,255,.88);line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.si-val.g{color:var(--gold);}
+.si-sub{font-family:'DM Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.24);margin-top:1px;}
+.si-sub.gr{color:#4ABA76;}
+
+/* ── WEATHER ── */
+.wx{background:rgba(6,12,24,.95);border-bottom:1px solid rgba(255,255,255,.04);padding:4px 14px;display:flex;align-items:center;gap:7px;flex-shrink:0;overflow-x:auto;scrollbar-width:none;}
+.wx::-webkit-scrollbar{display:none;}
+.wx-venue{font-size:.55rem;font-weight:600;color:rgba(255,255,255,.2);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;flex-shrink:0;}
+.wx-temp{font-family:'DM Mono',monospace;font-size:.64rem;color:rgba(255,255,255,.4);white-space:nowrap;}
+.wx-cond{font-size:.56rem;color:rgba(255,255,255,.22);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;}
+.wx-wind{font-family:'DM Mono',monospace;font-size:.6rem;color:rgba(255,255,255,.3);white-space:nowrap;}
+.wx-sep{width:1px;height:9px;background:rgba(255,255,255,.08);flex-shrink:0;}
+.wx-fc{display:flex;align-items:center;gap:7px;flex-shrink:0;}
+.wx-d{display:flex;align-items:center;gap:3px;}
+.wx-dn{font-size:.54rem;font-weight:600;color:rgba(255,255,255,.18);text-transform:uppercase;letter-spacing:.04em;}
+.wx-hi{font-family:'DM Mono',monospace;font-size:.58rem;color:rgba(255,255,255,.3);}
+.wx-rn{font-size:.52rem;color:#3A6A9A;}
+.live-wrap{margin-left:auto;display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.live-dot{width:4px;height:4px;background:#3CB96A;border-radius:50%;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+.live-lbl{font-size:.54rem;color:rgba(255,255,255,.18);font-weight:600;letter-spacing:.08em;text-transform:uppercase;}
+
+/* ── PAGE TABS ── */
+.ptabs{background:var(--surface);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;scrollbar-width:none;flex-shrink:0;position:sticky;top:57px;z-index:100;}
+.ptabs::-webkit-scrollbar{display:none;}
+.ptab{flex-shrink:0;padding:10px 18px;background:none;border:none;font-family:'DM Sans',sans-serif;font-size:.65rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:all .15s;}
+.ptab.active{color:var(--navy);border-bottom-color:var(--navy);}
+[data-theme="dark"] .ptab.active{color:var(--gold);border-bottom-color:var(--gold);}
+
+/* ── SCROLL AREA ── */
+.scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+
+/* ── TAB CONTENTS ── */
+.tc{display:none;padding:16px 14px 80px;}
+.tc.active{display:block;}
+@media(min-width:700px){.tc{padding:20px 24px 40px;max-width:1100px;margin:0 auto;}}
+
+/* ── TEAMS ── */
+.teams-grid{display:flex;flex-direction:column;gap:10px;}
+@media(min-width:700px){.teams-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));}}
+.tcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--rlg);overflow:hidden;}
+.tcard-hdr{background:var(--navy);padding:10px 14px;display:flex;align-items:center;gap:10px;}
+.trank{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:700;color:rgba(255,255,255,.12);min-width:26px;line-height:1;flex-shrink:0;}
+.trank.r1{color:var(--gold);}.trank.r2{color:rgba(197,165,97,.4);}.trank.r3{color:rgba(197,165,97,.22);}
+.tinfo{flex:1;min-width:0;}
+.tname{font-family:'Cormorant Garamond',serif;font-size:.95rem;font-weight:600;color:white;}
+.twin{font-family:'DM Mono',monospace;font-size:.58rem;color:rgba(197,165,97,.6);margin-top:2px;}
+.tpicks{padding:8px 14px 10px;}
+.grow{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border-2);}
+.grow:last-child{border-bottom:none;}
+.gpos{font-family:'DM Mono',monospace;font-size:.6rem;width:24px;flex-shrink:0;color:var(--muted);text-align:center;}
+.gpos.p1{color:var(--gold);font-weight:700;}.gpos.pt5{color:var(--navy-light);}.gpos.pt10{color:#2D7A4F;}
+.gname{flex:1;font-size:.78rem;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gscore{font-family:'DM Mono',monospace;font-size:.66rem;font-weight:600;min-width:24px;text-align:right;}
+.gscore.u{color:var(--under);}.gscore.e{color:var(--muted);}.gscore.o{color:var(--text-2);}
+.gearn{font-family:'DM Mono',monospace;font-size:.58rem;min-width:44px;text-align:right;color:#2D7A4F;}
+.gearn.n{color:var(--border);}
+[data-theme="dark"] .gearn{color:#4ABA76;}
+
+/* ── STANDINGS ── */
+.stable{width:100%;border-collapse:collapse;}
+.stable th{padding:7px 10px;font-size:.58rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);border-bottom:2px solid var(--border);text-align:left;}
+.stable th.r{text-align:right;}
+.stable td{padding:8px 10px;border-bottom:1px solid var(--border-2);font-size:.82rem;vertical-align:middle;}
+.stable tr:last-child td{border-bottom:none;}
+.stable tr:hover td{background:var(--surface-2);}
+.stable td.r{text-align:right;font-family:'DM Mono',monospace;font-size:.76rem;}
+.srk{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:700;color:var(--muted);}
+.srk.r1{color:var(--gold);}.srk.r2{color:rgba(197,165,97,.5);}.srk.r3{color:rgba(197,165,97,.3);}
+.sname{font-weight:600;}
+.spills{display:flex;flex-wrap:wrap;gap:2px;margin-top:3px;}
+.spill{font-size:.6rem;color:var(--muted);background:var(--surface-2);border-radius:99px;padding:1px 6px;}
+
+/* ── FIELD ── */
+.ftable{width:100%;border-collapse:collapse;}
+.ftable th{padding:7px 8px;font-size:.58rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-bottom:2px solid var(--border);text-align:left;}
+.ftable th.c{text-align:center;}
+.ftable td{padding:6px 8px;border-bottom:1px solid var(--border-2);font-size:.8rem;vertical-align:middle;}
+.ftable tr:last-child td{border-bottom:none;}
+.ftable tr:hover td{background:var(--surface-2);}
+.ftable td.c{text-align:center;font-family:'DM Mono',monospace;font-size:.74rem;}
+.fowned td{background:rgba(197,165,97,.03);}
+.otag{display:inline-block;background:var(--under-bg);color:var(--under);border-radius:99px;padding:1px 6px;font-size:.62rem;font-weight:600;margin:1px;}
+[data-theme="dark"] .otag{background:rgba(74,186,118,.12);color:#4ABA76;}
+
+/* ── TEE TIMES ── */
+.ttgroup{margin-bottom:18px;}
+.ttghdr{font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);padding:5px 0 4px;border-bottom:1px solid var(--border);margin-bottom:3px;}
+.ttrow{display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid var(--border-2);}
+.ttrow:last-child{border-bottom:none;}
+.tttime{font-family:'DM Mono',monospace;font-size:.72rem;font-weight:600;color:var(--navy);min-width:55px;flex-shrink:0;}
+[data-theme="dark"] .tttime{color:rgba(255,255,255,.7);}
+.tthole{font-family:'DM Mono',monospace;font-size:.64rem;color:var(--muted);min-width:24px;text-align:center;flex-shrink:0;}
+.ttplayer{font-size:.78rem;color:var(--text);flex:1;}
+.ttplayer.own{color:var(--gold);font-weight:600;}
+.ttowners{font-size:.64rem;color:var(--gold);margin-left:5px;}
+.mono{font-family:'DM Mono',monospace;}
+
+/* ── EMPTY ── */
+.empty-msg{text-align:center;padding:48px 24px;color:var(--muted);font-size:.85rem;}
+.empty-state{text-align:center;padding:80px 24px;}
+.empty-state h2{font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:var(--navy);margin-bottom:10px;}
+[data-theme="dark"] .empty-state h2{color:var(--gold);}
+.empty-state p{color:var(--muted);margin-bottom:20px;font-size:.88rem;}
+.btn-pri{background:var(--navy);color:var(--gold);border:1px solid rgba(197,165,97,.25);border-radius:var(--r);padding:10px 22px;font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;gap:8px;text-decoration:none;}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--navy);
+  border-top:1px solid rgba(197,165,97,.12);
+  display:flex;
+  padding:8px 0 max(16px, env(safe-area-inset-bottom));
+  z-index:300;
+}
+.bn-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;text-decoration:none;background:none;border:none;padding:0;}
+.bn-icon{width:20px;height:20px;color:rgba(255,255,255,.35);transition:color .15s;}
+.bn-lbl{font-size:.52rem;font-weight:600;color:rgba(255,255,255,.28);letter-spacing:.08em;text-transform:uppercase;transition:color .15s;}
+.bn-item.active .bn-icon{color:var(--gold);}
+.bn-item.active .bn-lbl{color:var(--gold);}
+
+/* ── UI POLISH ── */
+/* More editorial team cards */
+.tcard{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+.tcard-hdr{background:var(--navy);padding:9px 13px;display:flex;align-items:center;gap:9px;}
+.trank{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700;color:rgba(255,255,255,.1);min-width:24px;line-height:1;flex-shrink:0;}
+.tname{font-family:'Cormorant Garamond',serif;font-size:.92rem;font-weight:600;color:white;letter-spacing:-.01em;}
+.twin{font-family:'DM Mono',monospace;font-size:.56rem;color:rgba(184,169,106,.55);margin-top:1px;}
+.grow{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border-2);}
+.gname{flex:1;font-size:.76rem;font-weight:500;color:var(--text);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gpos{font-family:'DM Mono',monospace;font-size:.58rem;width:22px;flex-shrink:0;color:var(--muted);text-align:center;}
+.gscore{font-family:'DM Mono',monospace;font-size:.64rem;font-weight:700;min-width:22px;text-align:right;}
+.gearn{font-family:'DM Mono',monospace;font-size:.57rem;min-width:42px;text-align:right;}
+
+/* Standings table */
+.stable th{padding:6px 10px;font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);border-bottom:2px solid var(--border);}
+.stable td{padding:7px 10px;border-bottom:1px solid var(--border-2);font-size:.8rem;}
+.srk{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:700;}
+.spill{font-size:.59rem;color:var(--muted);background:var(--surface-2);border-radius:3px;padding:1px 5px;border:1px solid var(--border);}
+
+/* Field table */
+.ftable th{padding:6px 8px;font-size:.56rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);border-bottom:2px solid var(--border);}
+.ftable td{padding:5px 8px;border-bottom:1px solid var(--border-2);font-size:.79rem;}
+.otag{display:inline-block;background:var(--under-bg);color:var(--under);border-radius:3px;padding:1px 5px;font-size:.6rem;font-weight:600;margin:1px;border:1px solid rgba(10,92,42,.12);}
+
+/* Page tabs — more refined */
+.ptab{flex-shrink:0;padding:10px 16px;background:none;border:none;font-family:'DM Sans',sans-serif;font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:color .15s;}
+
+/* Stat bar — tighter */
+.si-lbl{font-size:.48rem;color:rgba(255,255,255,.24);font-weight:700;text-transform:uppercase;letter-spacing:.14em;margin-bottom:2px;}
+.si-val{font-family:'Cormorant Garamond',serif;font-size:.88rem;font-weight:600;color:rgba(255,255,255,.88);line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* ── HISTORY TAB ── */
+.hist-tournament{margin-bottom:18px;background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+.hist-tourn-hdr{padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none;}
+.hist-tourn-hdr:hover{background:var(--surface-2);}
+.hist-tourn-name{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:600;color:var(--text);flex:1;}
+.hist-tourn-meta{font-size:.6rem;color:var(--muted);font-family:'DM Mono',monospace;}
+.hist-tourn-chevron{color:var(--muted);font-size:.7rem;transition:transform .2s;flex-shrink:0;}
+.hist-tournament.open .hist-tourn-chevron{transform:rotate(180deg);}
+.hist-tourn-body{display:none;border-top:1px solid var(--border);}
+.hist-tournament.open .hist-tourn-body{display:block;}
+.hist-row{display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid var(--border-2);}
+.hist-row:last-child{border-bottom:none;}
+.hist-row:hover{background:var(--surface-2);}
+.hist-rank{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:700;color:var(--muted);width:24px;flex-shrink:0;}
+.hist-rank.r1{color:var(--gold);}
+.hist-rank.r2{color:rgba(197,165,97,.45);}
+.hist-rank.r3{color:rgba(197,165,97,.25);}
+.hist-name{flex:1;font-size:.84rem;font-weight:600;color:var(--text);}
+.hist-picks{display:flex;flex-wrap:wrap;gap:3px;margin-top:2px;}
+.hist-pick{font-size:.6rem;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:3px;padding:1px 5px;}
+.hist-pick.top10{color:var(--under);border-color:rgba(10,92,42,.2);background:var(--under-bg);}
+[data-theme="dark"] .hist-pick.top10{color:#4ABA76;border-color:rgba(74,186,118,.25);background:rgba(74,186,118,.08);}
+.hist-score{font-family:'DM Mono',monospace;font-size:.72rem;font-weight:700;color:var(--muted);min-width:28px;text-align:right;}
+.hist-score.under{color:var(--under);}
+[data-theme="dark"] .hist-score.under{color:#4ABA76;}
+.hist-winnings{font-family:'DM Mono',monospace;font-size:.72rem;font-weight:600;color:#2D7A4F;min-width:64px;text-align:right;}
+[data-theme="dark"] .hist-winnings{color:#4ABA76;}
+.hist-winnings.zero{color:var(--border);font-weight:400;}
+.hist-save-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:var(--navy);color:var(--gold);border:1px solid rgba(197,165,97,.2);border-radius:4px;font-family:'DM Sans',sans-serif;font-size:.65rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;margin:12px 16px;}
+.hist-save-btn:hover{background:var(--navy-mid);}
+.hist-save-btn:disabled{opacity:.4;cursor:default;}
+.hist-no-data{text-align:center;padding:40px 20px;color:var(--muted);font-size:.85rem;}
+.hist-no-data p{margin-bottom:8px;}
+
+
+
+/* ── DRAFT GRADES ── */
+.grades-intro{padding:16px 0 8px;border-bottom:1px solid var(--border);margin-bottom:20px;}
+.grades-intro-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;color:var(--text);}
+.grades-intro-sub{font-size:.7rem;color:var(--muted);margin-top:4px;line-height:1.5;}
+.grades-course-card{background:var(--navy);color:white;border-radius:6px;padding:14px 16px;margin-bottom:20px;}
+.grades-course-title{font-family:'Cormorant Garamond',serif;font-size:.95rem;font-weight:600;color:rgba(255,255,255,.9);margin-bottom:10px;letter-spacing:.02em;}
+.grades-factors{display:flex;flex-wrap:wrap;gap:8px;}
+.grades-factor{background:rgba(255,255,255,.08);border-radius:4px;padding:5px 10px;}
+.grades-factor-lbl{font-size:.52rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.35);margin-bottom:2px;}
+.grades-factor-val{font-size:.75rem;font-weight:600;color:rgba(255,255,255,.85);}
+.grades-factor-val.pos{color:#4ABA76;}
+.grades-factor-val.neg{color:#FF6B6B;}
+
+.grade-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:12px;}
+.grade-card-hdr{padding:11px 14px;display:flex;align-items:center;gap:12px;background:var(--navy);}
+.grade-rank{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700;color:rgba(255,255,255,.15);min-width:22px;flex-shrink:0;}
+.grade-rank.r1{color:var(--gold);}.grade-rank.r2{color:rgba(191,13,62,.6);}.grade-rank.r3{color:rgba(191,13,62,.35);}
+.grade-name{font-family:'Cormorant Garamond',serif;font-size:.95rem;font-weight:600;color:white;flex:1;}
+.grade-badge{font-family:'DM Mono',monospace;font-size:.75rem;font-weight:700;width:32px;height:32px;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.grade-A-plus{background:#1a4a1a;color:#4ABA76;border:1px solid rgba(74,186,118,.3);}
+.grade-A{background:#1a4a1a;color:#4ABA76;border:1px solid rgba(74,186,118,.25);}
+.grade-B-plus{background:#1a3a4a;color:#5BAEE0;border:1px solid rgba(91,174,224,.25);}
+.grade-B{background:#1a3a4a;color:#5BAEE0;border:1px solid rgba(91,174,224,.2);}
+.grade-C-plus{background:#3a3a1a;color:#D4C44A;border:1px solid rgba(212,196,74,.25);}
+.grade-C{background:#3a3a1a;color:#D4C44A;border:1px solid rgba(212,196,74,.2);}
+.grade-D{background:#3a1a1a;color:#E07A5F;border:1px solid rgba(224,122,95,.25);}
+.grade-body{padding:10px 14px 12px;}
+.grade-picks{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;}
+.grade-pick-row{display:flex;align-items:flex-start;gap:8px;}
+.grade-pick-name{font-size:.8rem;font-weight:600;color:var(--text);width:130px;flex-shrink:0;}
+.grade-pick-analysis{flex:1;}
+.grade-pick-tag{display:inline-block;font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:1px 5px;border-radius:3px;margin-bottom:2px;margin-right:3px;}
+.tag-elite{background:rgba(74,186,118,.12);color:#2D7A4F;border:1px solid rgba(74,186,118,.2);}
+.tag-fit{background:rgba(91,174,224,.1);color:#1a5090;border:1px solid rgba(91,174,224,.2);}
+.tag-hot{background:rgba(191,13,62,.08);color:var(--gold);border:1px solid rgba(191,13,62,.15);}
+.tag-value{background:rgba(212,196,74,.1);color:#7A6800;border:1px solid rgba(212,196,74,.2);}
+.tag-risk{background:rgba(224,122,95,.1);color:#8B2500;border:1px solid rgba(224,122,95,.2);}
+.tag-boom{background:rgba(139,92,246,.1);color:#5b21b6;border:1px solid rgba(139,92,246,.2);}
+[data-theme="dark"] .tag-elite{background:rgba(74,186,118,.12);color:#4ABA76;border-color:rgba(74,186,118,.2);}
+[data-theme="dark"] .tag-fit{background:rgba(91,174,224,.1);color:#7AAEE0;border-color:rgba(91,174,224,.2);}
+[data-theme="dark"] .tag-hot{background:rgba(191,13,62,.12);color:#FF7090;border-color:rgba(191,13,62,.25);}
+[data-theme="dark"] .tag-value{background:rgba(212,196,74,.08);color:#D4C44A;border-color:rgba(212,196,74,.2);}
+[data-theme="dark"] .tag-risk{background:rgba(224,122,95,.1);color:#E07A5F;border-color:rgba(224,122,95,.2);}
+[data-theme="dark"] .tag-boom{background:rgba(139,92,246,.1);color:#a78bfa;border-color:rgba(139,92,246,.2);}
+.grade-pick-note{font-size:.68rem;color:var(--muted);line-height:1.4;}
+.grade-summary{border-top:1px solid var(--border-2);padding-top:9px;margin-top:4px;}
+.grade-summary-txt{font-size:.72rem;color:var(--text-2);line-height:1.5;}
+.grades-disclaimer{font-size:.62rem;color:var(--muted);padding:12px 0;text-align:center;line-height:1.5;}
+
 </style>
 </head>
 <body>
 
-<div class="site-header">
-  <div class="header-brand">
-    <div class="pga-seal">
-      <span class="seal-pga">PGA</span>
-      <div class="seal-line"></div>
-      <span class="seal-year">2026</span>
-    </div>
-    <div class="brand-text">
-      <div class="pool-name">True Oregonian Majors Pool</div>
-      <div class="tournament-name">Setup</div>
-    </div>
+<!-- Header -->
+<div class="hdr">
+  <div class="hdr-seal">
+    <span class="hdr-seal-pga">THE</span>
+    <div class="hdr-seal-line"></div>
+    <span class="hdr-seal-year">2026</span>
   </div>
-  <nav class="header-nav">
-    <a class="nav-link" href="index.html">⛳ <span class="nav-label">Leaderboard</span></a>
-    <a class="nav-link" href="draft.html">📋 <span class="nav-label">Draft</span></a>
-    <a class="nav-link active" href="setup.html">⚙️ <span class="nav-label">Setup</span></a>
-    <button class="dark-toggle" onclick="toggleDarkMode()" title="Toggle dark mode">🌙</button>
-  </nav>
-</div>
-
-<div class="setup-page">
-  <h1 class="page-title">Tournament Setup</h1>
-  <p class="page-sub">Create a tournament, add your participants in draft order, then head to the draft board. This only needs to be done once per major.</p>
-
-  <div id="alert" class="alert"></div>
-  <div id="current-banner" style="display:none" class="current-banner">
-    <div>
-      <strong id="cur-name">—</strong>
-      <span id="cur-status" class="status-pill" style="margin-left:8px">—</span>
-      <div class="meta" id="cur-meta">—</div>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <a href="draft.html" class="btn-primary" style="text-decoration:none;padding:8px 18px;font-size:.75rem">Draft Board →</a>
-      <button class="btn-danger" onclick="resetTournament()">Reset</button>
-    </div>
+  <div class="hdr-text">
+    <div class="hdr-name">True Oregonian Majors Pool</div>
+    <div class="hdr-tourn" id="t-name">The Open Championship 2026 · Royal Birkdale</div>
   </div>
-
-  <!-- Tournament details -->
-  <div class="setup-section">
-    <div class="setup-section-header">
-      <span class="step-num">01</span>
-      <span class="step-title">Tournament Details</span>
+  <div class="hdr-actions">
+    <div class="desktop-nav">
+      <a href="index.html" class="active">Leaderboard</a>
+      <a href="draft.html">Draft</a>
+      <a href="setup.html">Setup</a>
     </div>
-    <div class="section-body">
-      <div class="form-row">
-        <div class="form-group">
-          <label>Tournament Name</label>
-          <input type="text" id="t-name" placeholder="e.g. 2026 PGA Championship"/>
-        </div>
-        <div class="form-group">
-          <label>Total Purse ($)</label>
-          <input type="number" id="t-purse" placeholder="21000000" value="21000000"/>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>ESPN Event ID</label>
-        <div class="hint">From the ESPN scoreboard URL: espn.com/golf/leaderboard/_/id/<strong>401811941</strong> — paste just the number.</div>
-        <input type="text" id="t-espn" placeholder="e.g. 401811941" style="max-width:260px"/>
-      </div>
-    </div>
-  </div>
-
-  <!-- Participants -->
-  <div class="setup-section">
-    <div class="setup-section-header">
-      <span class="step-num">02</span>
-      <span class="step-title">Participants — enter in draft order</span>
-    </div>
-    <div class="section-body">
-      <div class="participants-grid" id="participants-grid"></div>
-      <button class="btn-primary" onclick="addParticipantRow()" style="margin-top:14px;padding:8px 16px;font-size:.72rem">+ Add Player</button>
-    </div>
-  </div>
-
-  <!-- Save -->
-  <div class="actions">
-    <button class="btn-primary" onclick="saveTournament()" id="save-btn">
-      Save & Continue to Draft →
+    <button class="hdr-btn" onclick="toggleDark()" id="dark-btn" title="Toggle dark mode">
+      <svg id="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/></svg>
+      <svg id="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
     </button>
-    <div style="font-size:.75rem;color:var(--muted)"><?= CONFIG.picksPerPlayer ?> picks per player</div>
   </div>
 </div>
+
+<!-- Ticker -->
+<div class="ticker" id="ticker" style="display:none">
+  <div class="ticker-lbl">Leaders</div>
+  <div class="ticker-scroll"><div class="ticker-track" id="ticker-track"></div></div>
+</div>
+
+<!-- Stat bar -->
+<div class="statbar" id="statbar" style="display:none">
+  <div class="si"><div class="si-lbl">Pool Leader</div><div class="si-val g" id="sl-name">—</div><div class="si-sub" id="sl-win">—</div></div>
+  <div class="si"><div class="si-lbl">Field Leader</div><div class="si-val" id="fl-name">—</div><div class="si-sub gr" id="fl-score">—</div></div>
+  <div class="si"><div class="si-lbl">Cut Line</div><div class="si-val" id="cut">—</div><div class="si-sub" id="cut-n">—</div></div>
+</div>
+
+<!-- Weather -->
+<div class="wx" id="wx" style="display:none">
+  <span class="wx-venue">Royal Birkdale GC · Southport, England</span>
+  <div class="wx-sep"></div>
+  <span class="wx-temp" id="wx-temp">—</span>
+  <span class="wx-cond" id="wx-cond">—</span>
+  <span class="wx-wind" id="wx-wind"></span>
+  <div class="wx-sep"></div>
+  <div class="wx-fc" id="wx-fc"></div>
+  <div class="live-wrap"><div class="live-dot"></div><span class="live-lbl">Live</span></div>
+</div>
+
+<!-- Page tabs -->
+<div class="ptabs" id="ptabs" style="display:none">
+  <button class="ptab active" onclick="showTab('teams',this)">Teams</button>
+  <button class="ptab" onclick="showTab('standings',this)">Standings</button>
+  <button class="ptab" onclick="showTab('field',this)">Field</button>
+  <button class="ptab" onclick="showTab('teetimes',this)">Tee Times</button>
+    <button class="ptab" onclick="showTab('history',this)">History</button>
+    <button class="ptab" onclick="showTab('grades',this)">Draft Grades</button>
+</div>
+
+<!-- Scroll area -->
+<div class="scroll-area">
+  <div id="loading" style="text-align:center;padding:60px;color:var(--muted)">Loading...</div>
+  <div id="no-tournament" class="empty-state" style="display:none">
+    <h2>No Active Tournament</h2>
+    <p>Set up the The Open Championship 2026 at Royal Birkdale to get started.</p>
+    <a href="setup.html" class="btn-pri">Set Up Tournament</a>
+  </div>
+  <div id="app" style="display:none">
+    <div class="tc active" id="tc-teams"><div class="teams-grid" id="teams-grid"></div></div>
+    <div class="tc" id="tc-standings"><table class="stable"><thead><tr><th style="width:36px"></th><th>Player</th><th class="r">Score</th><th class="r">Winnings</th><th class="r">Best</th></tr></thead><tbody id="standings-tbody"></tbody></table></div>
+    <div class="tc" id="tc-field"><table class="ftable"><thead><tr><th>Pos</th><th>Player</th><th class="c">Score</th><th class="c">Today</th><th class="c">Thru</th><th class="c">R1</th><th class="c">R2</th><th class="c">R3</th><th class="c">R4</th><th class="c">$</th><th>Pool</th></tr></thead><tbody id="field-tbody"></tbody></table></div>
+    <div class="tc" id="tc-teetimes"><div id="teetimes-body"></div></div>
+    <div class="tc" id="tc-history">
+      <div id="history-body"><div class="empty-msg">Loading history...</div></div>
+    </div>
+    <div class="tc" id="tc-grades">
+      <div id="grades-body"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom nav (mobile only) -->
+<nav class="bottom-nav">
+  <a class="bn-item active" href="index.html">
+    <svg class="bn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    <span class="bn-lbl">Leaderboard</span>
+  </a>
+  <a class="bn-item" href="draft.html">
+    <svg class="bn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    <span class="bn-lbl">Draft</span>
+  </a>
+  <a class="bn-item" href="setup.html">
+    <svg class="bn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span class="bn-lbl">Setup</span>
+  </a>
+</nav>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  initDarkMode(); updateDarkBtn();
-  loadCurrent();
-  // Default 9 rows for TOMP
-  const defaultNames = ['Robb','Dominic','Tyler','Josh L','Taylor','Conor','Josh B','Sam','Aaron'];
-  defaultNames.forEach(n => addParticipantRow(n));
+// Dark mode
+function toggleDark(){
+  const d=document.documentElement.getAttribute('data-theme')==='dark';
+  document.documentElement.setAttribute('data-theme',d?'light':'dark');
+  localStorage.setItem('tomp-dark',String(!d));
+  document.getElementById('icon-moon').style.display=d?'block':'none';
+  document.getElementById('icon-sun').style.display=d?'none':'block';
+}
+(function(){
+  const s=localStorage.getItem('tomp-dark'),pd=window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if(s==='true'||(s===null&&pd)){
+    document.documentElement.setAttribute('data-theme','dark');
+    document.addEventListener('DOMContentLoaded',()=>{
+      const m=document.getElementById('icon-moon'),su=document.getElementById('icon-sun');
+      if(m)m.style.display='none';if(su)su.style.display='block';
+    });
+  }
+})();
+
+const db=window.supabase.createClient(CONFIG.supabaseUrl,CONFIG.supabaseKey);
+let tournament,participants=[],picks=[],scores=[],payouts={};
+
+document.addEventListener('DOMContentLoaded',async()=>{
+  fetchWx();
+  try{
+    const{data,error}=await db.from('tournaments').select('*').order('created_at',{ascending:false}).limit(1);
+    if(error||!data||!data.length){
+      document.getElementById('loading').style.display='none';
+      document.getElementById('no-tournament').style.display='block';return;
+    }
+    tournament=data[0];
+    document.getElementById('t-name').textContent=tournament.name;
+    document.title=tournament.name+' — TOMP';
+    const{data:pp}=await db.from('participants').select('*').eq('tournament_id',tournament.id).order('draft_order',{ascending:true});
+    participants=pp||[];
+    const{data:pk}=await db.from('picks').select('*,participants(name)').eq('tournament_id',tournament.id).order('pick_number',{ascending:true});
+    picks=pk||[];
+    await refresh();
+    document.getElementById('loading').style.display='none';
+    document.getElementById('app').style.display='block';
+    document.getElementById('statbar').style.display='flex';
+    document.getElementById('wx').style.display='flex';
+    document.getElementById('ptabs').style.display='flex';
+  }catch(e){
+    console.error('Boot error:', e);
+    document.getElementById('loading').textContent='Error: '+e.message;
+  }
+  setInterval(refresh,120000);
 });
 
-function addParticipantRow(value='') {
-  const grid = document.getElementById('participants-grid');
-  const idx = grid.children.length + 1;
-  const row = document.createElement('div');
-  row.className = 'p-input-row';
-  row.innerHTML = `<span class="p-num">${String(idx).padStart(2,'0')}</span>
-    <input type="text" placeholder="Name" value="${value}"/>`;
-  grid.appendChild(row);
+async function refresh(){
+  if(!tournament?.espn_id){renderAll([]);return;}
+  const id=tournament.espn_id;
+  // Try multiple ESPN endpoint formats — they change periodically
+  const endpoints=[
+    `https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard?event=${id}`,
+    `https://site.api.espn.com/apis/site/v2/sports/golf/pga/summary?event=${id}`,
+    `https://site.api.espn.com/apis/site/v2/sports/golf/leaderboard?event=${id}`,
+    `https://site.api.espn.com/apis/site/v2/sports/golf/pga/scoreboard/${id}/competitors`,
+  ];
+  for(const url of endpoints){
+    try{
+      const r=await fetch(url);
+      if(!r.ok)continue;
+      const j=await r.json();
+      // Try to find competitors array in multiple possible locations
+      const cs=
+        j?.competitors||
+        j?.events?.[0]?.competitions?.[0]?.competitors||
+        j?.event?.competitions?.[0]?.competitors||
+        j?.competition?.competitors||
+        [];
+      if(cs.length>0){parseAndRender(cs);return;}
+    }catch(e){continue;}
+  }
+  // No data found
+  renderAll([]);
 }
 
-async function loadCurrent() {
-  try {
-    const t = await getTournament();
-    if (!t) return;
-    document.getElementById('current-banner').style.display = 'flex';
-    document.getElementById('cur-name').textContent = t.name;
-    const badge = document.getElementById('cur-status');
-    badge.textContent = t.status; badge.className = `status-pill status-${t.status}`;
-    const purseStr = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(t.purse);
-    document.getElementById('cur-meta').textContent = `Purse: ${purseStr} · ESPN ID: ${t.espn_id||'not set'}`;
-    // pre-fill form
-    document.getElementById('t-name').value = t.name;
-    document.getElementById('t-purse').value = t.purse;
-    document.getElementById('t-espn').value = t.espn_id||'';
-    const parts = await getParticipants(t.id);
-    if (parts.length) {
-      document.getElementById('participants-grid').innerHTML = '';
-      parts.forEach(p => addParticipantRow(p.name));
-    }
-  } catch(e) { console.error(e); }
+function parseAndRender(cs){
+  // ESPN doesn't return position — competitors are pre-sorted by score
+  // We derive position from order, handling ties
+  const mapped=cs.map(c=>({
+    name:c.athlete?.displayName||c.displayName||'Unknown',
+    score:ps(c.score||c.linescores?.[0]?.displayValue||''),
+    today:c.linescores?.[0]?.displayValue||'',
+    thru:c.linescores?.[0]?.statistics?.categories?.[0]?.stats?.[5]?.displayValue||'',
+    r1:c.linescores?.[0]?.value!=null?c.linescores[0].value:null,
+    r2:c.linescores?.[1]?.value!=null?c.linescores[1].value:null,
+    r3:c.linescores?.[2]?.value!=null?c.linescores[2].value:null,
+    r4:c.linescores?.[3]?.value!=null?c.linescores[3].value:null,
+    teeTime:'',startHole:1,pos:'',
+  }));
+
+  // Sort by score ascending (lower = better), null scores go last
+  mapped.sort((a,b)=>{
+    if(a.score===null&&b.score===null)return 0;
+    if(a.score===null)return 1;
+    if(b.score===null)return-1;
+    return a.score-b.score;
+  });
+
+  // Assign positions with ties
+  mapped.forEach((g,i)=>{
+    if(g.score===null){g.pos='';return;}
+    // Find first player at this score
+    const first=mapped.findIndex(x=>x.score===g.score);
+    const pos=first+1;
+    // Count how many share this score
+    const tied=mapped.filter(x=>x.score===g.score).length;
+    g.pos=tied>1?`T${pos}`:`${pos}`;
+  });
+
+  scores=mapped;
+  payouts=calcPay(scores);
+  renderAll(scores);
 }
 
-async function saveTournament() {
-  const btn = document.getElementById('save-btn');
-  btn.disabled = true; btn.textContent = 'Saving…';
+function ps(s){
+  if(s===null||s===undefined||s==='')return null;
+  if(typeof s==='string'&&s.trim().toUpperCase()==='E')return 0;
+  const n=parseInt(s,10);return isNaN(n)?null:n;
+}
+function gr(st,i){const s=st[i];if(!s)return null;const v=parseInt(s.displayValue||s.value||s,10);return isNaN(v)?null:v;}
+
+// The Open Championship 2026 payouts — based on $21.5M purse (2025 structure, 60 players make cut)
+// Exact amounts to be confirmed; using 2025 distribution
+const PGA_PAYOUTS={
+  1:3100000,2:1860000,3:1170000,4:826000,5:690000,
+  6:612000,7:572000,8:534000,9:499000,10:463000,
+  11:431000,12:400000,13:371000,14:345000,15:319000,
+  16:295000,17:272000,18:250000,19:231000,20:213000,
+  21:197000,22:182000,23:168000,24:157000,25:147000,
+  26:137000,27:128000,28:119000,29:111000,30:103000,
+  31:96000,32:90000,33:85000,34:80000,35:76000,
+  36:72000,37:68000,38:65000,39:62000,40:59000,
+  41:56500,42:54000,43:51500,44:49000,45:47000,
+  46:45000,47:43200,48:41400,49:39600,50:38000,
+  51:36400,52:34900,53:33400,54:32000,55:30600,
+  56:29300,57:28000,58:27000,59:26200,60:25500,
+  61:24800,62:24100,63:23500,64:22900,65:22300,
+  66:21800,67:21300,68:20900,69:20500,70:20200,
+};
+
+function calcPay(sc){
+  const res={},grp={};
+  sc.forEach(g=>{
+    const raw=String(g.pos||'').replace(/[^0-9]/g,'');
+    const p=parseInt(raw,10);
+    if(!isNaN(p)&&p>0){if(!grp[p])grp[p]=[];grp[p].push(g.name);}
+  });
+  Object.entries(grp).forEach(([pos,names])=>{
+    const p=parseInt(pos,10);
+    // Sum tied position payouts and split equally
+    let tot=0;
+    for(let i=0;i<names.length;i++)tot+=(PGA_PAYOUTS[p+i]||0);
+    const per=tot/names.length;
+    names.forEach(n=>{res[n]=per;});
+  });
+  return res;
+}
+function nm(n){return(n||'').toLowerCase().replace(/[^a-z\s]/g,'').trim();}
+function fs(s){if(s===null||s===undefined)return'—';const n=parseInt(s,10);if(isNaN(n))return s;if(n===0)return'E';return n<0?`${n}`:`+${n}`;}
+function sc(s){if(s===null||s===undefined)return'';const n=parseInt(s,10);if(isNaN(n))return'';return n<0?'u':n===0?'e':'o';}
+function ln(n){if(!n)return'';const p=n.split(' ');return p[p.length-1];}
+function fm(n){return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(n||0);}
+function fsh(n){if(n>=1e6)return'$'+(n/1e6).toFixed(2)+'M';if(n>=1000)return'$'+Math.round(n/1000)+'K';return'$'+Math.round(n);}
+
+// Build a lookup map that supports both full name and last name matching
+function buildScoreMap(sc){
+  const map={};
+  const lastMap={};
+  sc.forEach(g=>{
+    map[nm(g.name)]=g;
+    // Also index by last name for fuzzy fallback
+    const last=nm(g.name).split(' ').pop();
+    if(!lastMap[last])lastMap[last]=[];
+    lastMap[last].push(g);
+  });
+  return{map,lastMap};
+}
+
+// Look up a pick name against ESPN scores - try exact, then last name
+function findGolfer(pickName, map, lastMap){
+  const key=nm(pickName);
+  if(map[key])return map[key];
+  // Try last name fallback
+  const last=key.split(' ').pop();
+  const candidates=lastMap[last]||[];
+  if(candidates.length===1)return candidates[0];
+  // Multiple candidates - try first letter of first name
+  const firstInitial=key[0];
+  const match=candidates.find(g=>nm(g.name)[0]===firstInitial);
+  return match||null;
+}
+
+function teams(sc){
+  const{map,lastMap}=buildScoreMap(sc);
+  return participants.map(p=>{
+    const my=picks.filter(pk=>pk.participant_id===p.id);
+    let tw=0,ts=0,hasScore=false;
+    const gs=my.map(pk=>{
+      const g=findGolfer(pk.golfer_name,map,lastMap);
+      const w=g?(payouts[g.name]||0):0;
+      tw+=w;
+      if(g&&g.score!==null){ts+=g.score;hasScore=true;}
+      return{pick:pk,g,w};
+    });
+    return{p,gs,tw,ts:hasScore?ts:null};
+  }).sort((a,b)=>b.tw-a.tw);
+}
+
+function renderAll(s){
+  renderTicker(s);renderStatBar(s);
+  const t=teams(s);
+  renderTeams(t);renderStandings(t);renderField(s);renderTT(s);
+}
+
+function renderTicker(s){
+  const track=document.getElementById('ticker-track');
+  if(!s.length){
+    if(!picks.length){document.getElementById('ticker').style.display='none';return;}
+    const items=picks.slice(0,20).map(pk=>`<span class="ti"><span class="ti-pos">—</span><span class="ti-name pk">${ln(pk.golfer_name)}</span><span class="ti-sc e">TBD</span></span><span class="ti-dot">·</span>`).join('');
+    track.innerHTML=items+items;
+    document.getElementById('ticker').style.display='flex';
+    return;
+  }
+  const items=s.slice(0,20).map(g=>{
+    const pk=picks.some(p=>nm(p.golfer_name)===nm(g.name));
+    return`<span class="ti"><span class="ti-pos">${g.pos||'—'}</span><span class="ti-name${pk?' pk':''}">${ln(g.name)}</span><span class="ti-sc ${sc(g.score)}">${fs(g.score)}</span></span><span class="ti-dot">·</span>`;
+  }).join('');
+  track.innerHTML=items+items;
+  document.getElementById('ticker').style.display='flex';
+}
+
+function renderStatBar(s){
+  const t=teams(s);
+  if(t.length){document.getElementById('sl-name').textContent=t[0].p.name;document.getElementById('sl-win').textContent=fm(t[0].tw);}
+  if(s.length){document.getElementById('fl-name').textContent=ln(s[0].name);document.getElementById('fl-score').textContent=fs(s[0].score);}
+  const cut=s[69];
+  if(cut){document.getElementById('cut').textContent=fs(cut.score);document.getElementById('cut-n').textContent=s.length+' players';}
+}
+
+function renderTeams(ts){
+  const grid=document.getElementById('teams-grid');grid.innerHTML='';
+  ts.forEach((t,rank)=>{
+    const rc=rank===0?'r1':rank===1?'r2':rank===2?'r3':'';
+    const tsHtml=t.ts!==null
+      ?`<span style="font-family:'DM Mono',monospace;font-size:.72rem;font-weight:700;color:${t.ts<0?'#4ABA76':t.ts===0?'rgba(255,255,255,.4)':'rgba(255,255,255,.5)'};margin-left:auto;padding-right:2px;flex-shrink:0">${fs(t.ts)}</span>`
+      :'';
+    const ph=t.gs.length
+      ?t.gs.map(({pick,g,w})=>{const pos=g?.pos||'—';const pn=parseInt((pos||'').replace(/\D/g,''),10);const pc=pn===1?'p1':pn<=5?'pt5':pn<=10?'pt10':'';return`<div class="grow"><span class="gpos ${pc}">${pos}</span><span class="gname">${pick.golfer_name}</span><span class="gscore ${sc(g?.score)}">${g?fs(g.score):'—'}</span><span class="gearn ${w>0?'':'n'}">${w>0?fsh(w):'—'}</span></div>`;}).join('')
+      :'<p style="color:var(--muted);font-size:.75rem;padding:5px 0">No picks yet — <a href="draft.html" style="color:var(--gold)">draft</a></p>';
+    const c=document.createElement('div');c.className='tcard';
+    c.innerHTML=`<div class="tcard-hdr"><span class="trank ${rc}">${rank+1}</span><div class="tinfo"><div class="tname">${t.p.name}</div><div class="twin">${fm(t.tw)}</div></div>${tsHtml}</div><div class="tpicks">${ph}</div>`;
+    grid.appendChild(c);
+  });
+}
+
+function renderStandings(ts){
+  const tbody=document.getElementById('standings-tbody');tbody.innerHTML='';
+  ts.forEach((t,rank)=>{
+    const rc=rank===0?'r1':rank===1?'r2':rank===2?'r3':'';
+    const pills=t.gs.map(({pick,g})=>`<span class="spill">${pick.golfer_name}${g?.pos?' · '+g.pos:''}</span>`).join('');
+    const best=t.gs.reduce((b,{g})=>{if(!g)return b;const n=parseInt((g.pos||'999').replace(/\D/g,''),10);return n<b?n:b;},999);
+    const tsStr=t.ts!==null?`<span style="font-family:'DM Mono',monospace;font-weight:700;color:${t.ts<0?'var(--under)':t.ts===0?'var(--muted)':'var(--text-2)'}">${fs(t.ts)}</span>`:'—';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><span class="srk ${rc}">${rank+1}</span></td><td><div class="sname">${t.p.name}</div><div class="spills">${pills}</div></td><td class="r">${tsStr}</td><td class="r" style="font-weight:600;color:${t.tw>0?'#2D7A4F':'var(--muted)'}">${fm(t.tw)}</td><td class="r" style="color:var(--muted)">${best<999?best:'—'}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderField(s){
+  const tbody=document.getElementById('field-tbody');tbody.innerHTML='';
+  // Build owner map using fuzzy matching
+  const{map:smap,lastMap:slmap}=buildScoreMap(s);
+  const om={};
+  picks.forEach(pk=>{
+    const g=findGolfer(pk.golfer_name,smap,slmap);
+    const key=g?nm(g.name):nm(pk.golfer_name);
+    if(!om[key])om[key]=[];
+    const p=participants.find(p=>p.id===pk.participant_id);
+    if(p)om[key].push(p.name);
+  });
+  if(!s.length){tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted);font-size:.85rem">Live scoring begins Thursday, July 16 · Check back when the tournament starts</td></tr>`;return;}
+  s.forEach(g=>{
+    const owners=om[nm(g.name)]||[];const win=payouts[g.name]||0;
+    const tr=document.createElement('tr');
+    if(owners.length)tr.className='fowned';
+    tr.innerHTML=`<td class="mono" style="color:var(--muted);font-size:.72rem">${g.pos||'—'}</td><td style="font-weight:600;font-size:.8rem">${g.name}</td><td class="c ${sc(g.score)}">${fs(g.score)}</td><td class="c">${fs(g.today)}</td><td class="c" style="color:var(--muted)">${g.thru||'—'}</td><td class="c">${g.r1||'—'}</td><td class="c">${g.r2||'—'}</td><td class="c">${g.r3||'—'}</td><td class="c">${g.r4||'—'}</td><td class="c" style="${win>0?'color:#2D7A4F;font-weight:600':''}">${win>0?fsh(win):'—'}</td><td>${owners.map(o=>`<span class="otag">${o}</span>`).join('')}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderTT(s){
+  const body=document.getElementById('teetimes-body');
+  const owned=new Set(picks.map(p=>nm(p.golfer_name)));
+  const grps={};
+  s.forEach(g=>{const t=g.teeTime||'TBD';if(!grps[t])grps[t]=[];grps[t].push(g);});
+  const keys=Object.keys(grps);
+  if(!keys.length||keys.length===1&&grps['TBD']){body.innerHTML='<div class="empty-msg">Tee times will appear here once pairings are announced — typically Wednesday, July 15, before the tournament.</div>';return;}
+  const sorted=keys.sort((a,b)=>{if(a==='TBD')return 1;if(b==='TBD')return-1;return a.localeCompare(b);});
+  body.innerHTML=sorted.map(time=>`
+    <div class="ttgroup">
+      <div class="ttghdr">${ftt(time)}</div>
+      ${grps[time].map(g=>{
+        const isOwn=owned.has(nm(g.name));
+        const owners=picks.filter(p=>nm(p.golfer_name)===nm(g.name)).map(p=>{const pa=participants.find(pa=>pa.id===p.participant_id);return pa?pa.name:'';}).filter(Boolean);
+        return`<div class="ttrow"><span class="tttime">${ftt(time)}</span><span class="tthole">H${g.startHole||1}</span><span class="ttplayer${isOwn?' own':''}">${g.name}${owners.length?`<span class="ttowners">(${owners.join(', ')})</span>`:''}</span><span class="mono" style="font-size:.7rem;color:var(--muted)">${fs(g.score)}</span></div>`;
+      }).join('')}
+    </div>`).join('');
+}
+
+function ftt(t){if(!t||t==='TBD')return'TBD';try{const d=new Date(t);return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});}catch(e){return t;}}
+
+let historyLoaded = false;
+function showTab(id,btn){
+  document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tc').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tc-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='history' && !historyLoaded){ historyLoaded=true; loadHistory(); }
+  if(id==='grades'){ renderGrades(); }
+}
+
+async function fetchWx(){
+  try{
+    const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=53.6167&longitude=-3.0167&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,precipitation_probability_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=Europe/London&forecast_days=5');
+    const d=await r.json();
+    const cm={0:'Sunny',1:'Clear',2:'Partly Cloudy',3:'Overcast',51:'Drizzle',61:'Rain',63:'Rain',71:'Snow',80:'Showers',95:'Storms'};
+    const wind=Math.round(d.current.wind_speed_10m);
+    const dirs=['N','NE','E','SE','S','SW','W','NW'];
+    const dir=dirs[Math.round(d.current.wind_direction_10m/45)%8];
+    document.getElementById('wx-temp').textContent=Math.round(d.current.temperature_2m)+'°F';
+    document.getElementById('wx-cond').textContent=cm[d.current.weather_code]||'—';
+    document.getElementById('wx-wind').textContent=wind+'mph '+dir;
+    const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    // Show Thu–Sun (tournament days)
+    document.getElementById('wx-fc').innerHTML=d.daily.time.slice(1,5).map((t,i)=>`<div class="wx-d"><span class="wx-dn">${days[new Date(t).getDay()]}</span><span class="wx-hi">${Math.round(d.daily.temperature_2m_max[i+1])}°</span><span class="wx-rn">${d.daily.precipitation_probability_max[i+1]}%</span></div><div class="wx-sep"></div>`).join('');
+    document.getElementById('wx').style.display='flex';
+  }catch(e){}
+}
+// ── HISTORY ───────────────────────────────────────────────────
+async function loadHistory(){
+  const body = document.getElementById('history-body');
   try {
-    const name   = document.getElementById('t-name').value.trim();
-    const purse  = parseFloat(document.getElementById('t-purse').value)||21000000;
-    const espnId = document.getElementById('t-espn').value.trim();
-    const names  = [...document.querySelectorAll('#participants-grid input')]
-      .map(i => i.value.trim()).filter(Boolean);
-    if (!name) { showAlert('Please enter a tournament name.','error'); return; }
-    if (names.length < 2) { showAlert('Please add at least 2 participants.','error'); return; }
-    let t = await getTournament();
-    if (t) {
-      await db.from('tournaments').update({ name, purse, espn_id: espnId }).eq('id', t.id);
-      await deleteParticipants(t.id);
-      await createParticipants(t.id, names);
-    } else {
-      t = await createTournament({ name, espnId, purse });
-      await createParticipants(t.id, names);
+    // Get all tournaments ordered by date
+    const { data: allTournaments } = await db.from('tournaments')
+      .select('*').order('created_at', { ascending: false });
+    if (!allTournaments?.length) {
+      body.innerHTML = '<div class="hist-no-data"><p>No tournament history yet.</p></div>';
+      return;
     }
-    showAlert(`✅ Saved! ${names.length} participants. Redirecting to draft board…`,'success');
-    setTimeout(() => window.location.href='draft.html', 1800);
+
+    let html = '';
+    for (const t of allTournaments) {
+      // Get saved results for this tournament
+      const { data: results } = await db.from('results')
+        .select('*').eq('tournament_id', t.id);
+      // Get participants + picks for this tournament
+      const { data: parts } = await db.from('participants')
+        .select('*').eq('tournament_id', t.id).order('draft_order', { ascending: true });
+      const { data: tpicks } = await db.from('picks')
+        .select('*').eq('tournament_id', t.id);
+
+      const hasResults = results?.length > 0;
+      const isCurrent = tournament?.id === t.id;
+
+      // Build team standings from results
+      let teams = [];
+      if (parts?.length) {
+        const resultMap = {};
+        (results || []).forEach(r => { resultMap[nm(r.golfer_name)] = r; });
+
+        teams = parts.map(p => {
+          const myPicks = (tpicks || []).filter(pk => pk.participant_id === p.id);
+          let totalWin = 0, totalScore = 0, hasScore = false;
+          const golfers = myPicks.map(pk => {
+            const r = resultMap[nm(pk.golfer_name)];
+            totalWin += r?.winnings || 0;
+            if (r?.score !== null && r?.score !== undefined) {
+              totalScore += r.score; hasScore = true;
+            }
+            return { name: pk.golfer_name, pos: r?.position || '—', score: r?.score ?? null, win: r?.winnings || 0 };
+          });
+          return { p, golfers, totalWin, totalScore: hasScore ? totalScore : null };
+        }).sort((a, b) => b.totalWin - a.totalWin);
+      }
+
+      const isoDate = t.created_at ? new Date(t.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '';
+      const purseStr = t.purse ? '$' + (t.purse / 1e6).toFixed(1) + 'M purse' : '';
+
+      html += `<div class="hist-tournament${isCurrent ? '' : ' open'}" id="hist-${t.id}">
+        <div class="hist-tourn-hdr" onclick="toggleHist('${t.id}')">
+          <div style="flex:1">
+            <div class="hist-tourn-name">${t.name}</div>
+            <div class="hist-tourn-meta">${[isoDate, purseStr].filter(Boolean).join(' · ')}</div>
+          </div>
+          ${isCurrent ? '<span style="font-size:.58rem;color:var(--gold);font-weight:700;letter-spacing:.08em;text-transform:uppercase">Live</span>' : ''}
+          <span class="hist-tourn-chevron">▼</span>
+        </div>
+        <div class="hist-tourn-body">
+          ${!hasResults && !isCurrent ? `
+            <div class="hist-no-data">
+              <p>No saved results for this tournament.</p>
+              <p style="font-size:.75rem">Use the Save Results button on the active tournament to archive scores.</p>
+            </div>` : ''}
+          ${isCurrent && !hasResults ? `
+            <div style="padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface-2)">
+              <p style="font-size:.78rem;color:var(--muted);margin-bottom:8px">Save final results to preserve scores after the tournament ends.</p>
+              <button class="hist-save-btn" id="save-results-btn" onclick="saveResults()">
+                Save Final Results
+              </button>
+            </div>` : ''}
+          ${teams.map((t, rank) => {
+            const rc = rank === 0 ? 'r1' : rank === 1 ? 'r2' : rank === 2 ? 'r3' : '';
+            const picks = t.golfers.map(g => {
+              const posNum = parseInt((g.pos || '').replace(/\D/g, ''), 10);
+              const isTop = posNum > 0 && posNum <= 10;
+              return `<span class="hist-pick${isTop ? ' top10' : ''}">${g.name}${g.pos && g.pos !== '—' ? ' · ' + g.pos : ''}</span>`;
+            }).join('');
+            return `<div class="hist-row">
+              <span class="hist-rank ${rc}">${rank + 1}</span>
+              <div style="flex:1;min-width:0">
+                <div class="hist-name">${t.p.name}</div>
+                <div class="hist-picks">${picks}</div>
+              </div>
+              <span class="hist-score${t.totalScore !== null && t.totalScore < 0 ? ' under' : ''}">${t.totalScore !== null ? fs(t.totalScore) : '—'}</span>
+              <span class="hist-winnings${t.totalWin > 0 ? '' : ' zero'}">${t.totalWin > 0 ? fm(t.totalWin) : '—'}</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    }
+
+    body.innerHTML = html || '<div class="hist-no-data"><p>No tournament history yet.</p></div>';
   } catch(e) {
-    showAlert('Error: '+e.message,'error');
-  } finally {
-    btn.disabled = false; btn.textContent = 'Save & Continue to Draft →';
+    body.innerHTML = `<div class="hist-no-data"><p>Error loading history: ${e.message}</p></div>`;
   }
 }
 
-async function resetTournament() {
-  if (!confirm('Delete this tournament and all picks? This cannot be undone.')) return;
+function toggleHist(id) {
+  document.getElementById('hist-' + id)?.classList.toggle('open');
+}
+
+async function saveResults() {
+  if (!tournament || !scores.length) { alert('No live scores to save.'); return; }
+  const btn = document.getElementById('save-results-btn');
+  btn.disabled = true; btn.textContent = 'Saving...';
   try {
-    const t = await getTournament();
-    if (t) await db.from('tournaments').delete().eq('id', t.id);
-    document.getElementById('current-banner').style.display = 'none';
-    document.getElementById('t-name').value = '';
-    document.getElementById('t-espn').value = '';
-    document.getElementById('participants-grid').innerHTML = '';
-    const defaultNames = ['Robb','Dominic','Tyler','Josh L','Taylor','Conor','Josh B','Sam','Aaron'];
-    defaultNames.forEach(n => addParticipantRow(n));
-    showAlert('Tournament reset. Create a new one below.','success');
-  } catch(e) { showAlert('Error: '+e.message,'error'); }
+    const rows = scores.map(g => ({
+      tournament_id: tournament.id,
+      golfer_name: g.name,
+      position: g.pos || '—',
+      score: g.score,
+      r1: g.r1, r2: g.r2, r3: g.r3, r4: g.r4,
+      winnings: payouts[g.name] || 0,
+    }));
+    // Upsert so re-saving updates existing
+    const { error } = await db.from('results').upsert(rows, { onConflict: 'tournament_id,golfer_name' });
+    if (error) throw error;
+    btn.textContent = '✓ Saved!';
+    setTimeout(() => loadHistory(), 800);
+  } catch(e) {
+    alert('Error saving: ' + e.message);
+    btn.disabled = false; btn.textContent = 'Save Final Results';
+  }
 }
 
-function showAlert(msg, type) {
-  const el = document.getElementById('alert');
-  el.textContent = msg; el.className = `alert alert-${type}`;
-  el.style.display = 'block';
-  window.scrollTo({top:0,behavior:'smooth'});
-  if (type==='success') setTimeout(()=>{el.style.display='none'},4000);
+
+
+// ── DRAFT GRADES ────────────────────────────────────────────
+// Grade each pick: Shinnecock = iron play, accuracy, patience
+// Source: DraftKings odds, Fried Egg / GolfPass expert analysis, course fit
+const PICK_GRADES = {
+  // A tier — elite fit or dominant form
+  'Tommy Fleetwood':      'A+', // Shot 63 at Shinnecock 2018, best course fit, in form
+  'Matt Fitzpatrick':     'A',  // 3 wins 2026, 2022 US Open champ, iron specialist
+  'Russell Henley':       'A-', // #2 driving accuracy, top 14 last 3 US Opens, recent win
+  'Jon Rahm':             'A-', // T2 PGA Champ, 2021 US Open champ, elite iron play
+  'Cameron Young':        'A-', // NY native, 2 wins, home crowd, 6 top-10s
+  'Robert MacIntyre':     'A-', // Links specialist, wind expert, great value
+  'Min Woo Lee':          'A-', // Specifically cited for Shinnecock — long irons off tees
+  // B tier — strong but some question marks
+  'Rory McIlroy':         'B+', // Links game fits, called it "best course in country"
+  'Xander Schauffele':    'B+', // Major winner, steady — lacks Shinnecock-specific form
+  'Collin Morikawa':      'B+', // Elite iron play is the skill this week
+  'Aaron Rai':            'B+', // Just won PGA Champ, real momentum at +11000 value
+  'Sam Burns':            'B',  // Named as Shinnecock-type player, straight hitter
+  'Si Woo Kim':           'B',  // Dark horse potential, can grind difficult setups
+  'Scottie Scheffler':    'B',  // World #1 but iron play down from peak levels
+  'Patrick Cantlay':      'B',  // Accurate and methodical, lacks major momentum
+  'Tyrrell Hatton':       'B',  // Links background, grew up in wind
+  'Justin Rose':          'B',  // 2013 US Open champ, creative shot-making
+  'J.J. Spaun':           'B',  // Defending US Open champ, named as Shinnecock type
+  'Justin Thomas':        'B-', // Patchy US Open form, iron game fits when on
+  'Sepp Straka':          'B-', // Accurate but limited US Open pedigree
+  'Corey Conners':        'B-', // Elite accuracy fits course, flies under radar
+  'Ludvig Åberg':         'B-', // World class talent, still learning major management
+  // C tier — misfit or significant risk
+  'Brooks Koepka':        'C+', // Won here 2018, real hand injury uncertainty
+  'Viktor Hovland':       'C+', // Slipped to #33, only 1 top-10 in 11 starts
+  'Bryson DeChambeau':    'C+', // Power game is liability at accuracy-first Shinnecock
+  'Harris English':       'C+', // Solid irons, limited major pedigree
+  'Cameron Smith':        'C+', // Great putter but Shinnecock minimizes putting edge
+  'Hideki Matsuyama':     'C',  // US Open historically not his event, putter the issue
+  'Patrick Reed':         'C',  // Grind style can work but limited ceiling here
+  'Wyndham Clark':        'C',  // 2023 US Open winner but form is inconsistent
+  'Rickie Fowler':        'C',  // Missed back-to-back cuts heading in
+  'Akshay Bhatia':        'C',  // High upside, volatile — unproven in majors
+  'Jake Knapp':           'C',  // Power game neutralized at Shinnecock
+  'Jordan Spieth':        'C-', // Long injury layoff, major unknown
+};
+
+const GRADE_ORDER = ['A+','A','A-','B+','B','B-','C+','C','C-','D'];
+
+function gradeColor(g){
+  if(g.startsWith('A')) return '#4ABA76';
+  if(g.startsWith('B')) return '#5BAEE0';
+  if(g.startsWith('C')) return '#D4C44A';
+  return '#E07A5F';
 }
 
-function updateDarkBtn() {
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  document.querySelectorAll('.dark-toggle').forEach(b => b.textContent = isDark ? '☀️' : '🌙');
+function gradeScore(g){ return GRADE_ORDER.indexOf(g); }
+
+function renderGrades(){
+  const body = document.getElementById('grades-body');
+  if(!participants.length){
+    body.innerHTML = '<div class="empty-msg">Set up a tournament to see draft grades.</div>';
+    return;
+  }
+
+  // Grade each team
+  const graded = participants.map(p => {
+    const myPicks = picks.filter(pk => pk.participant_id === p.id);
+    if(!myPicks.length) return {p, myPicks, teamGrade:'—', avgScore:99};
+    let total = 0, count = 0;
+    myPicks.forEach(pk => {
+      const g = PICK_GRADES[pk.golfer_name];
+      if(g){ total += gradeScore(g); count++; }
+    });
+    const avgIdx = count ? Math.round(total/count) : 5;
+    const teamGrade = GRADE_ORDER[Math.min(avgIdx, GRADE_ORDER.length-1)];
+    return {p, myPicks, teamGrade, avgScore: count ? total/count : 99};
+  }).sort((a,b) => a.avgScore - b.avgScore);
+
+  let out = `
+    <div style="padding:14px 0 12px;border-bottom:1px solid var(--border);margin-bottom:18px;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;color:var(--text)">The Open Championship 2026 Draft Grades</div>
+      <div style="font-size:.68rem;color:var(--muted);margin-top:4px">Based on Royal Birkdale course fit · current DraftKings odds · expert analysis</div>
+    </div>`;
+
+  graded.forEach((team, rank) => {
+    const gc = gradeColor(team.teamGrade);
+    const rankColor = rank===0?'var(--gold)':rank===1?'rgba(191,13,62,.55)':rank===2?'rgba(191,13,62,.3)':'rgba(255,255,255,.12)';
+    const pickList = team.myPicks.map(pk => {
+      const pg = PICK_GRADES[pk.golfer_name];
+      const pgColor = pg ? gradeColor(pg) : 'var(--muted)';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border-2);">
+        <span style="font-size:.8rem;font-weight:500;color:var(--text)">${pk.golfer_name}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:.72rem;font-weight:700;color:${pgColor}">${pg||'—'}</span>
+      </div>`;
+    }).join('');
+
+    out += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:10px;">
+      <div style="background:var(--navy);padding:10px 14px;display:flex;align-items:center;gap:10px;">
+        <span style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700;color:${rankColor};min-width:22px">${rank+1}</span>
+        <span style="font-family:'Cormorant Garamond',serif;font-size:.95rem;font-weight:600;color:white;flex:1">${team.p.name}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:.85rem;font-weight:700;color:${gc};background:rgba(255,255,255,.06);border:1px solid ${gc}33;border-radius:4px;padding:3px 10px">${team.teamGrade}</span>
+      </div>
+      <div style="padding:6px 14px 10px">${pickList||'<p style="font-size:.78rem;color:var(--muted);padding:8px 0">No picks yet.</p>'}</div>
+    </div>`;
+  });
+
+  out += `<div style="font-size:.6rem;color:var(--muted);text-align:center;padding:10px 0;line-height:1.5">Grades reflect course fit and form at Royal Birkdale. A+ = elite fit · B = solid · C = risk or mismatch</div>`;
+  body.innerHTML = out;
 }
-const origToggle = toggleDarkMode;
-window.toggleDarkMode = function() { origToggle(); updateDarkBtn(); };
+
 </script>
 </body>
 </html>
