@@ -1,26 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
-<head> <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
+<head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Draft — True Oregonian Majors Pool US Open</title>
+<title>The Open Draft — TOMP</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js"></script>
+<script>
+const CONFIG = {
+  supabaseUrl: 'https://tzcwlxarshsdaonwvwkz.supabase.co',
+  supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6Y3dseGFyc2hzZGFvbnd2d2t6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODU1MjAwNCwiZXhwIjoyMDk0MTI4MDA0fQ.bjhQWeMRUjG0fdnJ3PhBEtXBAdpw5ur736O2rrnj9SU',
+  picksPerPlayer: 4,
+  payoutPercents: {}
+};
+</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --navy:#002B5C;--navy-mid:#003875;--navy-light:#1A5090;
-  --gold:#BF0D3E;
-  --bg:#F5F7FA;--surface:#FFFFFF;--surface-2:#EEF1F6;
-  --border:#D8DDE6;--border-2:#E5E8EF;
-  --text:#0A1628;--text-2:#3D5275;--muted:#7A8CA8;
+  --navy:#1B2B1A;--navy-mid:#243523;--navy-light:#3A5C38;
+  --gold:#C8A951;
+  --bg:#F8F6F0;--surface:#FFFFFF;--surface-2:#F2EDE0;
+  --border:#DDD5C0;--border-2:#E8E2D0;
+  --text:#1A1A0E;--text-2:#4A5040;--muted:#7A8070;
   --under:#006B3C;--under-bg:#EBF5F0;
   --r:4px;--rlg:8px;
 }
 [data-theme="dark"]{
-  --bg:#001428;--surface:#001E3C;--surface-2:#002350;
+  --bg:#0E1A0D;--surface:#152414;--surface-2:#1C301A;
   --border:rgba(255,255,255,.08);--border-2:rgba(255,255,255,.05);
   --text:rgba(255,255,255,.92);--text-2:rgba(255,255,255,.55);--muted:rgba(255,255,255,.3);
   --under:#4ABA76;--under-bg:rgba(74,186,118,.08);
@@ -220,13 +227,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 
 <div class="hdr">
   <div class="hdr-seal">
-    <span class="hdr-seal-pga">USO</span>
+    <span class="hdr-seal-pga">THE</span>
     <div class="hdr-seal-line"></div>
     <span class="hdr-seal-year">2026</span>
   </div>
   <div class="hdr-text">
     <div class="hdr-name">True Oregonian Majors Pool</div>
-    <div class="hdr-tourn" id="t-name">2026 US Open · Shinnecock Hills</div>
+    <div class="hdr-tourn" id="t-name">The Open Championship 2026 · Royal Birkdale</div>
   </div>
   <div class="hdr-actions">
     <div class="desktop-nav">
@@ -352,87 +359,85 @@ function mTab(tab,btn){
 const db=window.supabase.createClient(CONFIG.supabaseUrl,CONFIG.supabaseKey);
 
 const FIELD=[
-  // Favorites — DraftKings live odds June 15 2026
-  {name:'Scottie Scheffler',          country:'🇺🇸', odds:'+460',   tier:'favorites'},
-  {name:'Rory McIlroy',               country:'🇬🇧', odds:'+950',   tier:'favorites'},
-  {name:'Jon Rahm',                   country:'🇪🇸', odds:'+1025',  tier:'favorites'},
-  {name:'Xander Schauffele',          country:'🇺🇸', odds:'+1850',  tier:'favorites'},
-  {name:'Cameron Young',              country:'🇺🇸', odds:'+2000',  tier:'favorites'},
-  {name:'Matt Fitzpatrick',           country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+2150',  tier:'favorites'},
+  // Favorites — DraftKings odds July 14 2026
+  {name:'Scottie Scheffler',          country:'🇺🇸', odds:'+700',   tier:'favorites'},
+  {name:'Rory McIlroy',               country:'🇬🇧', odds:'+850',   tier:'favorites'},
+  {name:'Matt Fitzpatrick',           country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+1500',  tier:'favorites'},
+  {name:'Tommy Fleetwood',            country:'🇬🇧', odds:'+1500',  tier:'favorites'},
+  {name:'Jon Rahm',                   country:'🇪🇸', odds:'+2200',  tier:'favorites'},
+  {name:'Xander Schauffele',          country:'🇺🇸', odds:'+2500',  tier:'favorites'},
   // Contenders
-  {name:'Tommy Fleetwood',            country:'🇬🇧', odds:'+2500',  tier:'contenders'},
-  {name:'Ludvig Åberg',               country:'🇸🇪', odds:'+2600',  tier:'contenders'},
-  {name:'Bryson DeChambeau',          country:'🇺🇸', odds:'+2700',  tier:'contenders'},
-  {name:'Brooks Koepka',              country:'🇺🇸', odds:'+3300',  tier:'contenders'},
+  {name:'Cameron Young',              country:'🇺🇸', odds:'+2800',  tier:'contenders'},
+  {name:'Ludvig Åberg',               country:'🇸🇪', odds:'+3300',  tier:'contenders'},
+  {name:'Joaquin Niemann',            country:'🇨🇱', odds:'+3500',  tier:'contenders'},
   {name:'Collin Morikawa',            country:'🇺🇸', odds:'+3500',  tier:'contenders'},
-  {name:'Wyndham Clark',              country:'🇺🇸', odds:'+3700',  tier:'contenders'},
-  {name:'Russell Henley',             country:'🇺🇸', odds:'+3700',  tier:'contenders'},
-  {name:'Sam Burns',                  country:'🇺🇸', odds:'+3800',  tier:'contenders'},
-  {name:'Si Woo Kim',                 country:'🇰🇷', odds:'+3900',  tier:'contenders'},
-  {name:'Chris Gotterup',             country:'🇺🇸', odds:'+4400',  tier:'contenders'},
-  {name:'Justin Thomas',              country:'🇺🇸', odds:'+4400',  tier:'contenders'},
-  {name:'Tyrrell Hatton',             country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+4600',  tier:'contenders'},
-  {name:'Patrick Cantlay',            country:'🇺🇸', odds:'+4600',  tier:'contenders'},
+  {name:'Robert MacIntyre',           country:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', odds:'+4000',  tier:'contenders'},
+  {name:'Viktor Hovland',             country:'🇳🇴', odds:'+4000',  tier:'contenders'},
+  {name:'Min Woo Lee',                country:'🇦🇺', odds:'+4000',  tier:'contenders'},
+  {name:'Shane Lowry',                country:'🇮🇪', odds:'+4500',  tier:'contenders'},
+  {name:'Justin Rose',                country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+5000',  tier:'contenders'},
+  {name:'Tom McKibbin',               country:'🇬🇧', odds:'+5000',  tier:'contenders'},
+  {name:'Tyrrell Hatton',             country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+5000',  tier:'contenders'},
+  {name:'Si Woo Kim',                 country:'🇰🇷', odds:'+5500',  tier:'contenders'},
+  {name:'Wyndham Clark',              country:'🇺🇸', odds:'+5500',  tier:'contenders'},
   // Value
-  {name:'Patrick Reed',               country:'🇺🇸', odds:'+4900',  tier:'value'},
-  {name:'Justin Rose',                country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+5200',  tier:'value'},
-  {name:'Viktor Hovland',             country:'🇳🇴', odds:'+5400',  tier:'value'},
-  {name:'J.J. Spaun',                 country:'🇺🇸', odds:'+6100',  tier:'value'},
+  {name:'Aaron Rai',                  country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+5000',  tier:'value'},
+  {name:'Brooks Koepka',              country:'🇺🇸', odds:'+5000',  tier:'value'},
+  {name:'Patrick Cantlay',            country:'🇺🇸', odds:'+6000',  tier:'value'},
+  {name:'Russell Henley',             country:'🇺🇸', odds:'+6000',  tier:'value'},
   {name:'Hideki Matsuyama',           country:'🇯🇵', odds:'+6500',  tier:'value'},
-  {name:'Robert MacIntyre',           country:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', odds:'+6600',  tier:'value'},
-  {name:'Jordan Spieth',              country:'🇺🇸', odds:'+6900',  tier:'value'},
-  {name:'Joaquin Niemann',            country:'🇨🇱', odds:'+6900',  tier:'value'},
-  {name:'Min Woo Lee',                country:'🇦🇺', odds:'+7200',  tier:'value'},
-  {name:'Ben Griffin',                country:'🇺🇸', odds:'+7400',  tier:'value'},
-  {name:'Maverick McNealy',           country:'🇺🇸', odds:'+7600',  tier:'value'},
-  {name:'Adam Scott',                 country:'🇦🇺', odds:'+7600',  tier:'value'},
-  {name:'Kurt Kitayama',              country:'🇺🇸', odds:'+7800',  tier:'value'},
-  {name:'Shane Lowry',                country:'🇮🇪', odds:'+8200',  tier:'value'},
-  {name:'Harris English',             country:'🇺🇸', odds:'+8800',  tier:'value'},
-  {name:'Jake Knapp',                 country:'🇺🇸', odds:'+9400',  tier:'value'},
-  {name:'David Puig',                 country:'🇪🇸', odds:'+9600',  tier:'value'},
-  {name:'Bud Cauley',                 country:'🇺🇸', odds:'+9600',  tier:'value'},
-  {name:'Alex Smalley',               country:'🇺🇸', odds:'+10500', tier:'value'},
-  {name:'Sepp Straka',                country:'🇦🇹', odds:'+10500', tier:'value'},
-  {name:'Aaron Rai',                  country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+11000', tier:'value'},
-  {name:'Alex Fitzpatrick',           country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+11000', tier:'value'},
-  {name:'Rickie Fowler',              country:'🇺🇸', odds:'+11000', tier:'value'},
-  {name:'Ryan Gerard',                country:'🇺🇸', odds:'+11000', tier:'value'},
-  {name:'Kristoffer Reitan',          country:'🇳🇴', odds:'+11500', tier:'value'},
-  {name:'J.T. Poston',                country:'🇺🇸', odds:'+11500', tier:'value'},
-  {name:'Jacob Bridgeman',            country:'🇺🇸', odds:'+13000', tier:'value'},
-  {name:'Jason Day',                  country:'🇦🇺', odds:'+13000', tier:'value'},
-  {name:'Nicolai Højgaard',           country:'🇩🇰', odds:'+13000', tier:'value'},
-  {name:'Akshay Bhatia',              country:'🇺🇸', odds:'+14000', tier:'value'},
-  {name:'Keegan Bradley',             country:'🇺🇸', odds:'+14500', tier:'value'},
-  {name:'Keith Mitchell',             country:'🇺🇸', odds:'+14500', tier:'value'},
-  {name:'Alex Noren',                 country:'🇸🇪', odds:'+15000', tier:'value'},
+  {name:'Justin Thomas',              country:'🇺🇸', odds:'+7000',  tier:'value'},
+  {name:'Sam Burns',                  country:'🇺🇸', odds:'+7000',  tier:'value'},
+  {name:'Akshay Bhatia',              country:'🇺🇸', odds:'+7500',  tier:'value'},
+  {name:'Harris English',             country:'🇺🇸', odds:'+8000',  tier:'value'},
+  {name:'Sepp Straka',                country:'🇦🇹', odds:'+8000',  tier:'value'},
+  {name:'Rasmus Højgaard',            country:'🇩🇰', odds:'+8000',  tier:'value'},
+  {name:'Nicolai Højgaard',           country:'🇩🇰', odds:'+8000',  tier:'value'},
+  {name:'Jordan Spieth',              country:'🇺🇸', odds:'+8000',  tier:'value'},
+  {name:'Adam Scott',                 country:'🇦🇺', odds:'+8000',  tier:'value'},
+  {name:'Chris Gotterup',             country:'🇺🇸', odds:'+8500',  tier:'value'},
+  {name:'Brian Harman',               country:'🇺🇸', odds:'+9000',  tier:'value'},
+  {name:'J.J. Spaun',                 country:'🇺🇸', odds:'+9000',  tier:'value'},
+  {name:'Bryson DeChambeau',          country:'🇺🇸', odds:'+9000',  tier:'value'},
+  {name:'Patrick Reed',               country:'🇺🇸', odds:'+9500',  tier:'value'},
+  {name:'Alex Fitzpatrick',           country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+10000', tier:'value'},
+  {name:'Corey Conners',              country:'🇨🇦', odds:'+10000', tier:'value'},
+  {name:'Keegan Bradley',             country:'🇺🇸', odds:'+10000', tier:'value'},
+  {name:'Harry Hall',                 country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+12000', tier:'value'},
+  {name:'Daniel Brown',               country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+12000', tier:'value'},
+  {name:'Ryan Fox',                   country:'🇳🇿', odds:'+12000', tier:'value'},
+  {name:'Jake Knapp',                 country:'🇺🇸', odds:'+13000', tier:'value'},
+  {name:'Tom Kim',                    country:'🇰🇷', odds:'+13000', tier:'value'},
+  {name:'Justin Rose',                country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+14000', tier:'value'},
+  {name:'Stephan Jaeger',             country:'🇩🇪', odds:'+14000', tier:'value'},
   {name:'Cameron Smith',              country:'🇦🇺', odds:'+15000', tier:'value'},
+  {name:'Max Greyserman',             country:'🇺🇸', odds:'+15000', tier:'value'},
   // Longshots
-  {name:'Dustin Johnson',             country:'🇺🇸', odds:'+17000', tier:'longshots'},
-  {name:'Sahith Theegala',            country:'🇺🇸', odds:'+17000', tier:'longshots'},
-  {name:'Harry Hall',                 country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+18000', tier:'longshots'},
-  {name:'Tom Kim',                    country:'🇰🇷', odds:'+18500', tier:'longshots'},
-  {name:'Pierceson Coody',            country:'🇺🇸', odds:'+19000', tier:'longshots'},
-  {name:'Ryan Fox',                   country:'🇳🇿', odds:'+19000', tier:'longshots'},
-  {name:'Daniel Berger',              country:'🇺🇸', odds:'+21000', tier:'longshots'},
-  {name:'Corey Conners',              country:'🇨🇦', odds:'+21000', tier:'longshots'},
-  {name:'Sungjae Im',                 country:'🇰🇷', odds:'+21000', tier:'longshots'},
-  {name:'Brian Harman',               country:'🇺🇸', odds:'+23000', tier:'longshots'},
-  {name:'Nick Taylor',                country:'🇨🇦', odds:'+23000', tier:'longshots'},
-  {name:'Ryo Hisatsune',              country:'🇯🇵', odds:'+24000', tier:'longshots'},
-  {name:'Max Greyserman',             country:'🇺🇸', odds:'+30000', tier:'longshots'},
-  {name:'Andrew Novak',               country:'🇺🇸', odds:'+31000', tier:'longshots'},
-  {name:'Patrick Rodgers',            country:'🇺🇸', odds:'+45000', tier:'longshots'},
-  {name:'Nico Echavarria',            country:'🇨🇴', odds:'+48000', tier:'longshots'},
-  {name:'Chris Kirk',                 country:'🇺🇸', odds:'+50000', tier:'longshots'},
-  {name:'Matti Schmid',               country:'🇩🇪', odds:'+50000', tier:'longshots'},
-  {name:'Emiliano Grillo',            country:'🇦🇷', odds:'+52500', tier:'longshots'},
-  {name:'Billy Horschel',             country:'🇺🇸', odds:'+57500', tier:'longshots'},
-  {name:'Padraig Harrington',         country:'🇮🇪', odds:'+160000',tier:'longshots'},
-  {name:'Gary Woodland',              country:'🇺🇸', odds:'+11500', tier:'longshots'},
-  {name:'Sudarshan Yellamaraju',      country:'🇮🇳', odds:'+13500', tier:'longshots'},
-  {name:'Benjamin James',             country:'🇺🇸', odds:'+33000', tier:'longshots'},
+  {name:'Jason Day',                  country:'🇦🇺', odds:'+17000', tier:'longshots'},
+  {name:'J.T. Poston',                country:'🇺🇸', odds:'+17000', tier:'longshots'},
+  {name:'Sungjae Im',                 country:'🇰🇷', odds:'+18000', tier:'longshots'},
+  {name:'Davis Riley',                country:'🇺🇸', odds:'+18000', tier:'longshots'},
+  {name:'Ryo Hisatsune',              country:'🇯🇵', odds:'+20000', tier:'longshots'},
+  {name:'Alex Noren',                 country:'🇸🇪', odds:'+20000', tier:'longshots'},
+  {name:'Marcus Armitage',            country:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds:'+20000', tier:'longshots'},
+  {name:'Emiliano Grillo',            country:'🇦🇷', odds:'+20000', tier:'longshots'},
+  {name:'Billy Horschel',             country:'🇺🇸', odds:'+20000', tier:'longshots'},
+  {name:'Pierceson Coody',            country:'🇺🇸', odds:'+22000', tier:'longshots'},
+  {name:'Andrew Novak',               country:'🇺🇸', odds:'+22000', tier:'longshots'},
+  {name:'Aldrich Potgieter',          country:'🇿🇦', odds:'+25000', tier:'longshots'},
+  {name:'Ben Griffin',                country:'🇺🇸', odds:'+25000', tier:'longshots'},
+  {name:'Keith Mitchell',             country:'🇺🇸', odds:'+28000', tier:'longshots'},
+  {name:'David Puig',                 country:'🇪🇸', odds:'+28000', tier:'longshots'},
+  {name:'Rickie Fowler',              country:'🇺🇸', odds:'+30000', tier:'longshots'},
+  {name:'Matt McCarty',               country:'🇺🇸', odds:'+30000', tier:'longshots'},
+  {name:'Denny McCarthy',             country:'🇺🇸', odds:'+30000', tier:'longshots'},
+  {name:'Thomas Detry',               country:'🇧🇪', odds:'+35000', tier:'longshots'},
+  {name:'Haotong Li',                 country:'🇨🇳', odds:'+35000', tier:'longshots'},
+  {name:'Maverick McNealy',           country:'🇺🇸', odds:'+40000', tier:'longshots'},
+  {name:'Padraig Harrington',         country:'🇮🇪', odds:'+50000', tier:'longshots'},
+  {name:'Louis Oosthuizen',           country:'🇿🇦', odds:'+50000', tier:'longshots'},
+  {name:'Lev Grinberg',              country:'🇺🇦', odds:'+100000',tier:'longshots'},
+  {name:'Phil Mickelson',             country:'🇺🇸', odds:'+50000', tier:'longshots'},
 ];
 
 let tournament,participants=[],picks=[],draftOrder=[],idx=0,activeFilter='all',q='';
