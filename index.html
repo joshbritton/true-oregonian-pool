@@ -3,25 +3,32 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>True Oregonian Majors Pool — US Open</title>
+<title>The Open Championship — TOMP</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js"></script>
+<script>
+const CONFIG = {
+  supabaseUrl: 'https://tzcwlxarshsdaonwvwkz.supabase.co',
+  supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6Y3dseGFyc2hzZGFvbnd2d2t6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODU1MjAwNCwiZXhwIjoyMDk0MTI4MDA0fQ.bjhQWeMRUjG0fdnJ3PhBEtXBAdpw5ur736O2rrnj9SU',
+  picksPerPlayer: 4,
+  payoutPercents: {}
+};
+</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 
 :root{
-  --navy:#002B5C;--navy-mid:#003875;--navy-light:#1A5090;
-  --gold:#BF0D3E;
-  --bg:#F5F7FA;--surface:#FFFFFF;--surface-2:#EEF1F6;
-  --border:#D8DDE6;--border-2:#E5E8EF;
-  --text:#0A1628;--text-2:#3D5275;--muted:#7A8CA8;
+  --navy:#1B2B1A;--navy-mid:#243523;--navy-light:#3A5C38;
+  --gold:#C8A951;
+  --bg:#F8F6F0;--surface:#FFFFFF;--surface-2:#F2EDE0;
+  --border:#DDD5C0;--border-2:#E8E2D0;
+  --text:#1A1A0E;--text-2:#4A5040;--muted:#7A8070;
   --under:#006B3C;--under-bg:#EBF5F0;
   --r:4px;--rlg:8px;
 }
 [data-theme="dark"]{
-  --bg:#001428;--surface:#001E3C;--surface-2:#002350;
+  --bg:#0E1A0D;--surface:#152414;--surface-2:#1C301A;
   --border:rgba(255,255,255,.08);--border-2:rgba(255,255,255,.05);
   --text:rgba(255,255,255,.92);--text-2:rgba(255,255,255,.55);--muted:rgba(255,255,255,.3);
   --under:#4ABA76;--under-bg:rgba(74,186,118,.08);
@@ -335,13 +342,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 <!-- Header -->
 <div class="hdr">
   <div class="hdr-seal">
-    <span class="hdr-seal-pga">USO</span>
+    <span class="hdr-seal-pga">THE</span>
     <div class="hdr-seal-line"></div>
     <span class="hdr-seal-year">2026</span>
   </div>
   <div class="hdr-text">
     <div class="hdr-name">True Oregonian Majors Pool</div>
-    <div class="hdr-tourn" id="t-name">2026 US Open · Shinnecock Hills</div>
+    <div class="hdr-tourn" id="t-name">The Open Championship 2026 · Royal Birkdale</div>
   </div>
   <div class="hdr-actions">
     <div class="desktop-nav">
@@ -371,7 +378,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
 
 <!-- Weather -->
 <div class="wx" id="wx" style="display:none">
-  <span class="wx-venue">Shinnecock Hills GC · Southampton, NY</span>
+  <span class="wx-venue">Royal Birkdale GC · Southport, England</span>
   <div class="wx-sep"></div>
   <span class="wx-temp" id="wx-temp">—</span>
   <span class="wx-cond" id="wx-cond">—</span>
@@ -396,7 +403,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);dis
   <div id="loading" style="text-align:center;padding:60px;color:var(--muted)">Loading...</div>
   <div id="no-tournament" class="empty-state" style="display:none">
     <h2>No Active Tournament</h2>
-    <p>Set up the 2026 US Open at Shinnecock Hills to get started.</p>
+    <p>Set up the The Open Championship 2026 at Royal Birkdale to get started.</p>
     <a href="setup.html" class="btn-pri">Set Up Tournament</a>
   </div>
   <div id="app" style="display:none">
@@ -555,21 +562,23 @@ function ps(s){
 }
 function gr(st,i){const s=st[i];if(!s)return null;const v=parseInt(s.displayValue||s.value||s,10);return isNaN(v)?null:v;}
 
-// 2026 US Open payouts — based on $21.5M purse (2025 structure, 60 players make cut)
+// The Open Championship 2026 payouts — based on $21.5M purse (2025 structure, 60 players make cut)
 // Exact amounts to be confirmed; using 2025 distribution
 const PGA_PAYOUTS={
-  1:3870000,2:2322000,3:1462500,4:1032500,5:861000,
-  6:764500,7:715650,8:668250,9:623100,10:580500,
-  11:539690,12:500865,13:464489,14:429658,15:397471,
-  16:367228,17:338632,18:311684,19:286780,20:264842,
-  21:244551,22:226207,23:209810,24:196591,25:183873,
-  26:171584,27:159832,28:148560,29:137826,30:127807,
-  31:119690,32:112560,33:106449,34:101254,35:97288,
-  36:93429,37:89676,38:85922,39:82384,40:78953,
-  41:75630,42:72306,43:69089,44:66086,45:63191,
-  46:60295,47:57507,48:54826,49:52253,50:49894,
-  51:47535,52:45283,53:43138,54:41100,55:39170,
-  56:37348,57:35633,58:34230,59:32988,60:31962,
+  1:3100000,2:1860000,3:1170000,4:826000,5:690000,
+  6:612000,7:572000,8:534000,9:499000,10:463000,
+  11:431000,12:400000,13:371000,14:345000,15:319000,
+  16:295000,17:272000,18:250000,19:231000,20:213000,
+  21:197000,22:182000,23:168000,24:157000,25:147000,
+  26:137000,27:128000,28:119000,29:111000,30:103000,
+  31:96000,32:90000,33:85000,34:80000,35:76000,
+  36:72000,37:68000,38:65000,39:62000,40:59000,
+  41:56500,42:54000,43:51500,44:49000,45:47000,
+  46:45000,47:43200,48:41400,49:39600,50:38000,
+  51:36400,52:34900,53:33400,54:32000,55:30600,
+  56:29300,57:28000,58:27000,59:26200,60:25500,
+  61:24800,62:24100,63:23500,64:22900,65:22300,
+  66:21800,67:21300,68:20900,69:20500,70:20200,
 };
 
 function calcPay(sc){
@@ -712,7 +721,7 @@ function renderField(s){
     const p=participants.find(p=>p.id===pk.participant_id);
     if(p)om[key].push(p.name);
   });
-  if(!s.length){tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted);font-size:.85rem">Live scoring begins Thursday, June 18 · Check back when the tournament starts</td></tr>`;return;}
+  if(!s.length){tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted);font-size:.85rem">Live scoring begins Thursday, July 16 · Check back when the tournament starts</td></tr>`;return;}
   s.forEach(g=>{
     const owners=om[nm(g.name)]||[];const win=payouts[g.name]||0;
     const tr=document.createElement('tr');
@@ -728,7 +737,7 @@ function renderTT(s){
   const grps={};
   s.forEach(g=>{const t=g.teeTime||'TBD';if(!grps[t])grps[t]=[];grps[t].push(g);});
   const keys=Object.keys(grps);
-  if(!keys.length||keys.length===1&&grps['TBD']){body.innerHTML='<div class="empty-msg">Tee times will appear here once pairings are announced — typically Wednesday, June 17, before the tournament.</div>';return;}
+  if(!keys.length||keys.length===1&&grps['TBD']){body.innerHTML='<div class="empty-msg">Tee times will appear here once pairings are announced — typically Wednesday, July 15, before the tournament.</div>';return;}
   const sorted=keys.sort((a,b)=>{if(a==='TBD')return 1;if(b==='TBD')return-1;return a.localeCompare(b);});
   body.innerHTML=sorted.map(time=>`
     <div class="ttgroup">
@@ -755,7 +764,7 @@ function showTab(id,btn){
 
 async function fetchWx(){
   try{
-    const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=40.8940&longitude=-72.4400&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,precipitation_probability_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America/New_York&forecast_days=5');
+    const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude=53.6167&longitude=-3.0167&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,precipitation_probability_max&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=Europe/London&forecast_days=5');
     const d=await r.json();
     const cm={0:'Sunny',1:'Clear',2:'Partly Cloudy',3:'Overcast',51:'Drizzle',61:'Rain',63:'Rain',71:'Snow',80:'Showers',95:'Storms'};
     const wind=Math.round(d.current.wind_speed_10m);
@@ -976,8 +985,8 @@ function renderGrades(){
 
   let out = `
     <div style="padding:14px 0 12px;border-bottom:1px solid var(--border);margin-bottom:18px;">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;color:var(--text)">2026 US Open Draft Grades</div>
-      <div style="font-size:.68rem;color:var(--muted);margin-top:4px">Based on Shinnecock Hills course fit · current DraftKings odds · expert analysis</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;color:var(--text)">The Open Championship 2026 Draft Grades</div>
+      <div style="font-size:.68rem;color:var(--muted);margin-top:4px">Based on Royal Birkdale course fit · current DraftKings odds · expert analysis</div>
     </div>`;
 
   graded.forEach((team, rank) => {
@@ -1002,7 +1011,7 @@ function renderGrades(){
     </div>`;
   });
 
-  out += `<div style="font-size:.6rem;color:var(--muted);text-align:center;padding:10px 0;line-height:1.5">Grades reflect course fit and form at Shinnecock Hills. A+ = elite fit · B = solid · C = risk or mismatch</div>`;
+  out += `<div style="font-size:.6rem;color:var(--muted);text-align:center;padding:10px 0;line-height:1.5">Grades reflect course fit and form at Royal Birkdale. A+ = elite fit · B = solid · C = risk or mismatch</div>`;
   body.innerHTML = out;
 }
 
